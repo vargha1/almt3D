@@ -12,9 +12,13 @@ const loader = new GLTFLoader().setPath("./New/");
 const renderer = new T.WebGLRenderer();
 const renderScene = new RenderPass(scene, camera);
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+camera.aspect = 400/300+0.5;
+camera.updateProjectionMatrix();
 renderer.toneMapping = T.ReinhardToneMapping;
-renderer.domElement.style.height = "calc(100vh - 24px)"
+renderer.domElement.style.border = "#314252 solid 2px"
+renderer.domElement.style.width = '400px'
+renderer.domElement.style.height = '300px'
 const outputPass = new OutputPass();
 const finalComposer = new EffectComposer(renderer);
 const bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 2, 0.4, 0.2);
@@ -26,7 +30,12 @@ finalComposer.addPass(outputPass)
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement)
-camera.position.set(10, 10, 10)
+controls.rotateSpeed = 0.33;
+controls.minPolarAngle = 1.12;
+controls.maxPolarAngle = 1.12;
+controls.minDistance = 8;
+controls.maxDistance = 20;
+controls.update()
 
 loader.load("scene.gltf", function (gltf) {
   const mesh = gltf.scene;
@@ -71,8 +80,6 @@ const pl6 = new T.PointLight(0xffff, 100);
 pl6.position.set(4, 7.5, 5.5)
 pl6.castShadow = true
 scene.add(pl6);
-const pl6Helper = new T.PointLightHelper(pl6, 1)
-scene.add(pl6Helper)
 // const dl1 = new T.DirectionalLight(0xffffff, 0.5)
 // dl1.castShadow = true
 // camera.add(dl1)
@@ -81,6 +88,9 @@ const dl2 = new T.DirectionalLight(0xffffff, 2)
 dl2.position.set(0, 50, 0)
 dl2.castShadow = true
 scene.add(dl2)
+
+camera.position.set(-10,3,0)
+camera.lookAt(new T.Vector3(0,3,0))
 
 function animate() {
   renderer.render(scene, camera);
