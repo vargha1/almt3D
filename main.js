@@ -1,41 +1,77 @@
 import * as T from "three";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { EffectComposer } from "three/examples/jsm/Addons.js";
-import { UnrealBloomPass } from "three/examples/jsm/Addons.js";
-import { RenderPass } from "three/examples/jsm/Addons.js";
-import { OutputPass } from "three/examples/jsm/Addons.js";
 
 const scene = new T.Scene();
 const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
 const loader = new GLTFLoader().setPath("./New/");
 const renderer = new T.WebGLRenderer();
-const renderScene = new RenderPass(scene, camera);
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
-camera.aspect = 400/300+0.5;
-camera.updateProjectionMatrix();
-renderer.toneMapping = T.ReinhardToneMapping;
-renderer.domElement.style.border = "#314252 solid 2px"
-renderer.domElement.style.width = '400px'
-renderer.domElement.style.height = '300px'
-const outputPass = new OutputPass();
-const finalComposer = new EffectComposer(renderer);
-const bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 2, 0.4, 0.2);
-bloomPass.threshold = 0;
-bloomPass.strength = 2;
-bloomPass.radius = 5;
-finalComposer.addPass(renderScene)
-finalComposer.addPass(outputPass)
-document.body.appendChild(renderer.domElement);
+renderer.setSize(400, 300);
+document.getElementById('canvasHolder').appendChild(renderer.domElement);
+renderer.domElement.classList.add('transition-all')
+renderer.domElement.classList.add('duration-500')
 
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.rotateSpeed = 0.33;
+controls.autoRotate = true
+controls.enablePan = false
 controls.minPolarAngle = 1.12;
 controls.maxPolarAngle = 1.12;
-controls.minDistance = 8;
-controls.maxDistance = 20;
+controls.minDistance = 1;
+controls.maxDistance = 2000;
 controls.update()
+
+var fired = false;
+const clickHandler = (el, evt, fn) => el.addEventListener(evt, (e) => {
+  if (!fired) fn(e);
+  fired = true;
+})
+
+clickHandler(
+  renderer.domElement,
+  'click', () => {
+    document.getElementById('startingText').classList.add('hidden')
+    document.getElementById('header').classList.remove('hidden')
+    document.querySelector("main").classList.add('bottom-0')
+    document.querySelector("main").classList.remove('top-1/2')
+    document.querySelector("main").classList.remove('-translate-y-1/2')
+    renderer.setSize(window.innerWidth, window.innerHeight - 152)
+    renderer.setPixelRatio(window.devicePixelRatio)
+    document.getElementById('canvasHolder').classList.add('w-full')
+    document.getElementById('canvasHolder').classList.remove('w-1/2')
+    controls.autoRotate = false;
+    controls.update()
+    camera.position.set(-12, 8, 0)
+  }
+)
+
+const positions = [
+  {
+    x: 0,
+    y: 2.5,
+    z: 3
+  },
+  {
+    x: 0,
+    y: 50,
+    z: 0
+  },
+  {
+    x: 0,
+    y: 20,
+    z: 0
+  },
+]
+
+document.querySelectorAll('button').forEach((btn, key) => {
+  btn.addEventListener('click', () => {
+    camera.position.set(positions[key].x, positions[key].y, positions[key].z);
+    camera.updateProjectionMatrix()
+    controls.target.set(positions[key].x, positions[key].y + 1, positions[key].z + 1)
+    controls.update()
+  })
+})
 
 loader.load("scene.gltf", function (gltf) {
   const mesh = gltf.scene;
@@ -89,12 +125,10 @@ dl2.position.set(0, 50, 0)
 dl2.castShadow = true
 scene.add(dl2)
 
-camera.position.set(-10,3,0)
-camera.lookAt(new T.Vector3(0,3,0))
+camera.position.set(-12, 8, 0)
 
 function animate() {
   renderer.render(scene, camera);
-  finalComposer.render()
   controls.update()
 }
 renderer.setAnimationLoop(animate)
