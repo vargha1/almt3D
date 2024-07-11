@@ -8,7 +8,7 @@ import { FontLoader } from "three/examples/jsm/Addons.js";
 
 const scene = new T.Scene();
 const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-const loader = new GLTFLoader().setPath("/New/");
+const loader = new GLTFLoader().setPath("./New/");
 const loader2 = new FontLoader()
 const renderer = new T.WebGLRenderer();
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -177,7 +177,7 @@ controls.enablePan = false
 controls.minPolarAngle = 1.12;
 controls.maxPolarAngle = 1.12;
 controls.minDistance = 1;
-controls.maxDistance = 2000;
+controls.maxDistance = 100;
 controls.update()
 
 function animate() {
