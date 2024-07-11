@@ -1,10 +1,15 @@
 import * as T from "three";
+import gsap from "gsap";
+import HelvetikerFont from "three/examples/fonts/helvetiker_regular.typeface.json";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { TextGeometry } from "three/examples/jsm/Addons.js";
+import { FontLoader } from "three/examples/jsm/Addons.js";
 
 const scene = new T.Scene();
 const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-const loader = new GLTFLoader().setPath("./New/");
+const loader = new GLTFLoader().setPath("/New/");
+const loader2 = new FontLoader()
 const renderer = new T.WebGLRenderer();
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(400, 300);
@@ -12,15 +17,18 @@ document.getElementById('canvasHolder').appendChild(renderer.domElement);
 renderer.domElement.classList.add('transition-all')
 renderer.domElement.classList.add('duration-500')
 
-const controls = new OrbitControls(camera, renderer.domElement)
-controls.rotateSpeed = 0.33;
-controls.autoRotate = true
-controls.enablePan = false
-controls.minPolarAngle = 1.12;
-controls.maxPolarAngle = 1.12;
-controls.minDistance = 1;
-controls.maxDistance = 2000;
-controls.update()
+var font = loader2.parse(HelvetikerFont)
+const geo = new TextGeometry("My name is Vargha\nand i am a frontend web\ndeveloper", {
+  font: font,
+  size: 0.3,
+  depth: 0.1,
+  curveSegments: 12,
+
+})
+
+const textMesh = new T.Mesh(geo, new T.MeshPhongMaterial({ color: 0xffffff }))
+textMesh.position.set(-1.3, 4.5, -7)
+scene.add(textMesh)
 
 var fired = false;
 const clickHandler = (el, evt, fn) => el.addEventListener(evt, (e) => {
@@ -31,6 +39,8 @@ const clickHandler = (el, evt, fn) => el.addEventListener(evt, (e) => {
 clickHandler(
   renderer.domElement,
   'click', () => {
+    renderer.domElement.classList.add('transition-all')
+    renderer.domElement.classList.add('duration-500')
     document.getElementById('startingText').classList.add('hidden')
     document.getElementById('header').classList.remove('hidden')
     document.querySelector("main").classList.add('bottom-0')
@@ -49,27 +59,62 @@ clickHandler(
 const positions = [
   {
     x: 0,
-    y: 2.5,
-    z: 3
+    y: 1,
+    z: 3,
+    duration: 2,
+    ease: "none",
+    onUpdate: function () {
+      controls.target = new T.Vector3(0, 3, 4.5)
+      controls.update()
+    },
   },
   {
     x: 0,
-    y: 50,
-    z: 0
+    y: 4,
+    z: -1.3,
+    duration: 2,
+    ease: "none",
+    onUpdate: function () {
+      controls.target = new T.Vector3(3, 4, -1.3)
+      controls.update()
+    },
   },
   {
     x: 0,
-    y: 20,
-    z: 0
+    y: 3.5,
+    z: -4,
+    duration: 2,
+    ease: "none",
+    onUpdate: function () {
+      controls.target = new T.Vector3(0, 4, -5)
+      controls.update()
+    },
   },
 ]
 
+camera.position.set(-12, 8, 0)
+
 document.querySelectorAll('button').forEach((btn, key) => {
   btn.addEventListener('click', () => {
-    camera.position.set(positions[key].x, positions[key].y, positions[key].z);
-    camera.updateProjectionMatrix()
-    controls.target.set(positions[key].x, positions[key].y + 1, positions[key].z + 1)
-    controls.update()
+    if (key != 3) {
+      gsap.to(camera.position, positions[key])
+    } else {
+      fired = false;
+      renderer.domElement.classList.remove('transition-all')
+      renderer.domElement.classList.remove('duration-500')
+      document.getElementById('startingText').classList.remove('hidden')
+      document.getElementById('header').classList.add('hidden')
+      document.querySelector("main").classList.remove('bottom-0')
+      document.querySelector("main").classList.add('top-1/2')
+      document.querySelector("main").classList.add('-translate-y-1/2')
+      renderer.setSize(400, 300)
+      renderer.setPixelRatio(window.devicePixelRatio)
+      document.getElementById('canvasHolder').classList.remove('w-full')
+      document.getElementById('canvasHolder').classList.add('w-1/2')
+      controls.reset()
+      controls.autoRotate = true;
+      controls.update()
+    }
   })
 })
 
@@ -125,7 +170,15 @@ dl2.position.set(0, 50, 0)
 dl2.castShadow = true
 scene.add(dl2)
 
-camera.position.set(-12, 8, 0)
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.rotateSpeed = 0.33;
+controls.autoRotate = true
+controls.enablePan = false
+controls.minPolarAngle = 1.12;
+controls.maxPolarAngle = 1.12;
+controls.minDistance = 1;
+controls.maxDistance = 2000;
+controls.update()
 
 function animate() {
   renderer.render(scene, camera);
