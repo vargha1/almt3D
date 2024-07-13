@@ -15,19 +15,20 @@ const loader2 = new FontLoader()
 const renderer = new T.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
 document.getElementById('canvasHolder').appendChild(renderer.domElement);
 
-var font = loader2.parse(HelvetikerFont)
-const geo = new TextGeometry("My name is Vargha\nand i am a frontend web\ndeveloper", {
-  font: font,
-  size: 0.3,
-  depth: 0.1,
-  curveSegments: 12,
-})
+// var font = loader2.parse(HelvetikerFont)
+// const geo = new TextGeometry("My name is Vargha\nand i am a frontend web\ndeveloper", {
+//   font: font,
+//   size: 0.3,
+//   depth: 0.1,
+//   curveSegments: 12,
+// })
 
-const textMesh = new T.Mesh(geo, new T.MeshPhongMaterial({ color: 0xffffff }))
-textMesh.position.set(-1.3, 4.5, -7)
-scene.add(textMesh)
+// const textMesh = new T.Mesh(geo, new T.MeshPhongMaterial({ color: 0xffffff }))
+// textMesh.position.set(-1.3, 4.5, -7)
+// scene.add(textMesh)
 
 // var fired = false;
 // const clickHandler = (el, evt, fn) => el.addEventListener(evt, (e) => {
@@ -100,38 +101,40 @@ const positions = [
 ]
 
 camera.position.set(-12, 8, 12)
-controls.target = new T.Vector3(0,4,12)
+controls.target = new T.Vector3(0, 4, 12)
+camera.updateProjectionMatrix()
+controls.update()
 
-document.querySelectorAll('button').forEach((btn, key) => {
-  btn.addEventListener('click', () => {
-    if (key != 3) {
-      gsap.to(camera.position, positions[key])
-    } else {
-      gsap.to(camera.position, {
-        x: -12,
-        y: 8,
-        z: 0,
-        duration: 2,
-        ease: "none",
-        onUpdate: function () {
-          controls.target = new T.Vector3(0, 0, 0)
-          controls.update()
-        },
-      })
-      // fired = false;
-      // document.querySelector("main").classList.remove('bottom-0')
-      // document.querySelector("main").classList.add('top-1/2')
-      // document.querySelector("main").classList.add('-translate-y-1/2')
-      // renderer.setSize(400, 300)
-      // renderer.setPixelRatio(window.devicePixelRatio)
-      // document.getElementById('canvasHolder').classList.remove('w-full')
-      // document.getElementById('canvasHolder').classList.add('w-1/2')
-      // controls.reset()
-      // controls.autoRotate = true;
-      // controls.update()
-    }
-  })
-})
+// document.querySelectorAll('button').forEach((btn, key) => {
+//   btn.addEventListener('click', () => {
+//     if (key != 3) {
+//       gsap.to(camera.position, positions[key])
+//     } else {
+//       gsap.to(camera.position, {
+//         x: -12,
+//         y: 8,
+//         z: 0,
+//         duration: 2,
+//         ease: "none",
+//         onUpdate: function () {
+//           controls.target = new T.Vector3(0, 0, 0)
+//           controls.update()
+//         },
+//       })
+//       // fired = false;
+//       // document.querySelector("main").classList.remove('bottom-0')
+//       // document.querySelector("main").classList.add('top-1/2')
+//       // document.querySelector("main").classList.add('-translate-y-1/2')
+//       // renderer.setSize(400, 300)
+//       // renderer.setPixelRatio(window.devicePixelRatio)
+//       // document.getElementById('canvasHolder').classList.remove('w-full')
+//       // document.getElementById('canvasHolder').classList.add('w-1/2')
+//       // controls.reset()
+//       // controls.autoRotate = true;
+//       // controls.update()
+//     }
+//   })
+// })
 
 loader.load("scene.gltf", function (gltf) {
   const mesh = gltf.scene;
@@ -151,7 +154,6 @@ const geo2 = new T.BoxGeometry(1, 1, 1)
 const material2 = new T.MeshStandardMaterial({ color: 0xffffff });
 let firstLayer = [{ name: "next", color: 0x000000 }, { name: "previous", color: 0x000000 }, { name: "", color: 0x000000 }, { name: "", color: 0x000000 }]
 let secondLayer = [{ name: "start", color: 0x00FF00 }, { name: "stop", color: 0xFF0000 }, { name: "forward", color: 0x00FFFF }, { name: "rewind", color: 0xFFA500 }]
-let cubesGroup = new T.Group();
 
 for (let i = 0; i < 2; i++) {
   let space = 0.3
@@ -167,8 +169,7 @@ for (let i = 0; i < 2; i++) {
       cube.name = secondLayer[j].name
       cube.material.color.set(secondLayer[j].color)
     }
-    cubesGroup.add(cube)
-    scene.add(cubesGroup)
+    scene.add(cube)
   }
 }
 
@@ -230,7 +231,7 @@ scene.add(pl6);
 
 const raycaster = new T.Raycaster()
 
-window.addEventListener('mousemove', onMouseDown)
+window.addEventListener('mousedown', onMouseDown)
 
 console.log(scene.children)
 function onMouseDown(event) {
@@ -238,7 +239,7 @@ function onMouseDown(event) {
   controls.update()
   const coords = new T.Vector2(
     (event.clientX / renderer.domElement.clientWidth) * 2 - 1,
-    -((event.clientY / renderer.domElement.clientHeight) * 2 + 1),
+    -((event.clientY / renderer.domElement.clientHeight) * 2 - 1),
   )
   raycaster.setFromCamera(coords, camera)
 
@@ -246,7 +247,12 @@ function onMouseDown(event) {
   if (intersections.length > 0) {
     if (intersections[0].object.name == "start") {
       document.getElementById("video").play();
-      console.log("played");
+    } else if (intersections[0].object.name == "stop") {
+      document.getElementById("video").pause()
+    } else if (intersections[0].object.name == "forward") {
+      document.getElementById("video").currentTime += 5
+    } else if (intersections[0].object.name == "rewind") {
+      document.getElementById("video").currentTime -= 5
     }
     console.log(intersections[0].object.geometry.parameters)
   }
@@ -256,8 +262,10 @@ function onMouseDown(event) {
 
 
 function animate() {
+  requestAnimationFrame(animate)
+
   renderer.render(scene, camera);
   camera.updateProjectionMatrix()
   controls.update()
 }
-renderer.setAnimationLoop(animate)
+animate()
