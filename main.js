@@ -8,9 +8,11 @@ import { FontLoader } from "three/examples/jsm/Addons.js";
 
 const scene = new T.Scene();
 const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+camera.aspect = window.innerWidth / window.innerHeight
+camera.updateProjectionMatrix()
 const loader = new GLTFLoader().setPath("./New/");
 const loader2 = new FontLoader()
-const renderer = new T.WebGLRenderer();
+const renderer = new T.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.getElementById('canvasHolder').appendChild(renderer.domElement);
@@ -53,6 +55,14 @@ scene.add(textMesh)
 //   }
 // )
 
+const controls = new OrbitControls(camera, renderer.domElement)
+// controls.enablePan = false
+// controls.minPolarAngle = 1;
+// controls.maxPolarAngle = 1.2;
+controls.minDistance = 1;
+controls.maxDistance = 100;
+controls.update()
+
 const positions = [
   {
     x: 0,
@@ -89,7 +99,8 @@ const positions = [
   },
 ]
 
-camera.position.set(-12, 8, 0)
+camera.position.set(-12, 8, 12)
+controls.target = new T.Vector3(0,4,12)
 
 document.querySelectorAll('button').forEach((btn, key) => {
   btn.addEventListener('click', () => {
@@ -212,33 +223,26 @@ scene.add(pl6);
 // dl1.castShadow = true
 // camera.add(dl1)
 // scene.add(camera)
-const dl2 = new T.DirectionalLight(0xffffff, 2)
-dl2.position.set(0, 50, 0)
-dl2.castShadow = true
-scene.add(dl2)
-
-const controls = new OrbitControls(camera, renderer.domElement)
-controls.enablePan = false
-controls.minPolarAngle = 1;
-controls.maxPolarAngle = 1.2;
-controls.minDistance = 1;
-controls.maxDistance = 100;
-controls.update()
+// const dl2 = new T.DirectionalLight(0xffffff, 2)
+// dl2.position.set(0, 50, 0)
+// dl2.castShadow = true
+// scene.add(dl2)
 
 const raycaster = new T.Raycaster()
 
-document.addEventListener('mousedown', onMouseDown)
+window.addEventListener('mousemove', onMouseDown)
 
+console.log(scene.children)
 function onMouseDown(event) {
   camera.updateProjectionMatrix()
   controls.update()
   const coords = new T.Vector2(
-    (event.clientX / renderer.domElement.width) * 2 - 1,
-    -((event.clientY / renderer.domElement.height) * 2 + 1),
+    (event.clientX / renderer.domElement.clientWidth) * 2 - 1,
+    -((event.clientY / renderer.domElement.clientHeight) * 2 + 1),
   )
   raycaster.setFromCamera(coords, camera)
 
-  let intersections = raycaster.intersectObjects(cubesGroup, true);
+  let intersections = raycaster.intersectObjects(scene.children, true);
   if (intersections.length > 0) {
     if (intersections[0].object.name == "start") {
       document.getElementById("video").play();
@@ -246,6 +250,8 @@ function onMouseDown(event) {
     }
     console.log(intersections[0].object.geometry.parameters)
   }
+  camera.updateProjectionMatrix()
+  controls.update()
 }
 
 
