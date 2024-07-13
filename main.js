@@ -242,7 +242,7 @@ function onMouseDown(event) {
   )
   raycaster.setFromCamera(coords, camera)
 
-  let intersections = raycaster.intersectObjects(scene.children, true);
+  let intersections = raycaster.intersectObjects(scene.children, false);
   if (intersections.length > 0) {
     if (intersections[0].object.name == "start") {
       document.getElementById("video").play();
