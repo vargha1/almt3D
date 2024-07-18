@@ -11,7 +11,6 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { CSS2DRenderer, CSS2DObject } from "three/examples/jsm/Addons.js";
 
 const scene = new T.Scene();
 const scene2 = new T.Scene();
@@ -22,26 +21,33 @@ const loader = new GLTFLoader().setPath("./New2/");
 const loader2 = new FontLoader()
 const renderer = new T.WebGLRenderer({ antialias: true });
 const renderer2 = new CSS3DRenderer();
+renderer2.setSize(window.innerWidth, window.innerHeight)
 const div = document.createElement('div')
-div.innerHTML = `<iframe src="https://zebra-qr.com/" frameborder="0" class="w-full"></iframe>`
+div.style.width = "768px"
+div.innerHTML = `<iframe src="https://safahanbattery.ir/" frameborder="0" style="backface-visibility: hidden; width:100%; height:100%;"></iframe>`
 const css3DObject = new CSS3DObject(div)
+css3DObject.scale.set(0.039,0.13,1)
+css3DObject.position.set(-12,140,-23)
+css3DObject.lookAt(172,200,-22)
+css3DObject.updateMatrixWorld()
 scene2.add(css3DObject)
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer2.domElement.classList.add("absolute")
-renderer2.domElement.classList.add("top-0")
-renderer2.domElement.classList.add("z-[4]")
-renderer2.domElement.classList.add("w-[1000px]")
-renderer2.domElement.classList.add("h-[500px]")
+renderer2.domElement.style.pointerEvents = "none";
+// renderer2.domElement.classList.add("top-0")
+// renderer2.domElement.classList.add("z-[4]")
+// renderer2.domElement.classList.add("w-[1000px]")
+// renderer2.domElement.classList.add("h-[500px]")
 document.getElementById('canvasHolder').appendChild(renderer.domElement);
 document.getElementById('canvasHolder').appendChild(renderer2.domElement);
 RectAreaLightUniformsLib.init()
 
 const renderScene = new RenderPass(scene, camera);
-const bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1, 0.4, 1);
+var bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1, 0.4, 1);
 bloomPass.threshold = 0;
-bloomPass.strength = 0.4;
+bloomPass.strength = 0.2;
 bloomPass.radius = 0.1;
 
 const outputPass = new OutputPass();
@@ -94,8 +100,8 @@ const controls = new OrbitControls(camera, renderer.domElement)
 // controls.enablePan = false
 // controls.minPolarAngle = 1;
 // controls.maxPolarAngle = 1.2;
-controls.minDistance = 1;
-controls.maxDistance = 100;
+controls.minDistance = 100;
+controls.maxDistance = 1000;
 controls.update()
 
 const positions = [
@@ -173,7 +179,6 @@ controls.update()
 loader.load("dake_GLTF.gltf", function (gltf) {
   var mesh = gltf.scene;
   mesh.position.set(0, 1, 0)
-  mesh.scale.set(0.05, 0.05, 0.05)
   scene.add(mesh)
 })
 
@@ -228,6 +233,8 @@ bigCube.position.set(0, 5, 29.25)
 bigCube2.position.set(0, 5, 29.25)
 scene.add(bigCube)
 scene.add(bigCube2)
+scene2.add(bigCube)
+scene2.add(bigCube2)
 
 const ambientLight = new T.AmbientLight(0xffffff, 5)
 scene.add(ambientLight)
@@ -324,7 +331,12 @@ function onMouseDown(event) {
     } else if (intersections[0].object.name == "rewind") {
       document.getElementById("video").currentTime -= 5
     }
-    console.log(intersections[0].object)
+    if(intersections[0].object.name == "polySurfaceShape2_1"){
+      scene2.remove(intersections[0].object)
+      scene.remove(intersections[0].object)
+      console.log("done");
+      console.log(intersections[0].object);
+    }
   }
   camera.updateProjectionMatrix()
   controls.update()
@@ -360,8 +372,8 @@ function onMouseDown(event) {
 
 function animate() {
   requestAnimationFrame(animate)
-  renderer.render(scene, camera);
   renderer2.render(scene2, camera)
+  renderer.render(scene, camera);
   camera.updateProjectionMatrix()
   controls.update()
   bloomComposer.render()
