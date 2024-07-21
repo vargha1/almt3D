@@ -14,21 +14,20 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
 const scene = new T.Scene();
 const scene2 = new T.Scene();
-const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-camera.aspect = window.innerWidth / window.innerHeight
-camera.updateProjectionMatrix()
+const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1400)
 const loader = new GLTFLoader().setPath("./New2/");
 const loader2 = new FontLoader()
 const renderer = new T.WebGLRenderer({ antialias: true });
 const renderer2 = new CSS3DRenderer();
 renderer2.setSize(window.innerWidth, window.innerHeight)
 const div = document.createElement('div')
-div.style.width = "768px"
+div.style.width = "1024px"
+div.style.height = "1240px"
 div.innerHTML = `<iframe src="https://safahanbattery.ir/" frameborder="0" style="backface-visibility: hidden; width:100%; height:100%;"></iframe>`
 const css3DObject = new CSS3DObject(div)
-css3DObject.scale.set(0.039,0.13,1)
-css3DObject.position.set(-12,140,-23)
-css3DObject.lookAt(172,200,-22)
+css3DObject.scale.set(0.0295, 0.0317, 1)
+css3DObject.position.set(-12.2, 138, -23)
+css3DObject.lookAt(172, 200, -22)
 css3DObject.updateMatrixWorld()
 scene2.add(css3DObject)
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -40,8 +39,9 @@ renderer2.domElement.style.pointerEvents = "none";
 // renderer2.domElement.classList.add("z-[4]")
 // renderer2.domElement.classList.add("w-[1000px]")
 // renderer2.domElement.classList.add("h-[500px]")
-document.getElementById('canvasHolder').appendChild(renderer.domElement);
 document.getElementById('canvasHolder').appendChild(renderer2.domElement);
+document.getElementById('canvasHolder').appendChild(renderer.domElement);
+
 RectAreaLightUniformsLib.init()
 
 const renderScene = new RenderPass(scene, camera);
@@ -100,7 +100,7 @@ const controls = new OrbitControls(camera, renderer.domElement)
 // controls.enablePan = false
 // controls.minPolarAngle = 1;
 // controls.maxPolarAngle = 1.2;
-controls.minDistance = 100;
+controls.minDistance = 50;
 controls.maxDistance = 1000;
 controls.update()
 
@@ -188,7 +188,7 @@ const baseCube = new T.Mesh(geometry, material);
 baseCube.receiveShadow = true
 baseCube.position.set(0, -2, 0)
 // baseCube.name = "start"
-scene.add(baseCube)
+// scene.add(baseCube)
 
 const geo2 = new T.BoxGeometry(1, 1, 1)
 const material2 = new T.MeshStandardMaterial({ color: 0xffffff });
@@ -258,17 +258,17 @@ spl3.target.position.set(1, -2, 7)
 const rectL1 = new T.RectAreaLight(0xffff00, 10, 0.1, 10)
 rectL1.position.set(1.1, 15, 0)
 rectL1.lookAt(1.1, 14, 0)
-scene.add(rectL1)
+// scene.add(rectL1)
 const rectL2 = new T.RectAreaLight(0xffff00, 10, 0.1, 28)
 rectL2.position.set(-15.7, 15, 0)
 rectL2.lookAt(-15.7, 14, 0)
-scene.add(rectL2)
+// scene.add(rectL2)
 
 const rectLHelper = new RectAreaLightHelper(rectL1)
 const rectLHelper2 = new RectAreaLightHelper(rectL2)
-scene.add(rectLHelper)
-scene.add(rectLHelper2)
-// const pl2Helper = new T.PointLightHelper(pl2, 1);
+// scene.add(rectLHelper)
+// scene.add(rectLHelper2)
+// // const pl2Helper = new T.PointLightHelper(pl2, 1);
 // scene.add(pl2Helper)
 // const pl3 = new T.PointLight(0xffffff, 5000);
 // pl3.position.set(80, 10, 0)
@@ -331,7 +331,7 @@ function onMouseDown(event) {
     } else if (intersections[0].object.name == "rewind") {
       document.getElementById("video").currentTime -= 5
     }
-    if(intersections[0].object.name == "polySurfaceShape2_1"){
+    if (intersections[0].object.name == "polySurfaceShape2_1") {
       scene2.remove(intersections[0].object)
       scene.remove(intersections[0].object)
       console.log("done");
