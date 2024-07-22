@@ -11,6 +11,9 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { MaskPass } from 'three/examples/jsm/postprocessing/MaskPass.js';
+import { ClearPass } from 'three/examples/jsm/postprocessing/ClearPass.js';
+import { ClearMaskPass } from "three/examples/jsm/postprocessing/MaskPass.js";
 
 const scene = new T.Scene();
 const scene2 = new T.Scene();
@@ -42,13 +45,15 @@ renderer2.domElement.style.pointerEvents = "none";
 document.getElementById('canvasHolder').appendChild(renderer2.domElement);
 document.getElementById('canvasHolder').appendChild(renderer.domElement);
 
-RectAreaLightUniformsLib.init()
+function addBloomObj(obj) {
+  maskPass.scene.add(obj)
+}
 
 const renderScene = new RenderPass(scene, camera);
-var bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1, 0.4, 1);
+var bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1, 0.4, 0);
 bloomPass.threshold = 0;
-bloomPass.strength = 0.2;
-bloomPass.radius = 0.1;
+bloomPass.strength = 1;
+bloomPass.radius = 0.5;
 
 const outputPass = new OutputPass();
 const bloomComposer = new EffectComposer(renderer);
@@ -56,6 +61,13 @@ bloomComposer.renderToScreen = true;
 bloomComposer.addPass(renderScene);
 bloomComposer.addPass(bloomPass);
 bloomComposer.addPass(outputPass);
+
+const maskPass = new MaskPass(scene, camera);
+bloomComposer.addPass(maskPass);
+
+const clearPass = new ClearMaskPass();
+bloomComposer.addPass(clearPass);
+
 
 
 // var font = loader2.parse(HelvetikerFont)
@@ -183,12 +195,12 @@ loader.load("dake_GLTF.gltf", function (gltf) {
 })
 
 const geometry = new T.BoxGeometry(200, 5, 200);
-const material = new T.MeshStandardMaterial({ color: 0x000000 });
+const material = new T.MeshStandardMaterial({ color: 0xffff00 });
 const baseCube = new T.Mesh(geometry, material);
 baseCube.receiveShadow = true
-baseCube.position.set(0, -2, 0)
+baseCube.position.set(600, -2, 0)
 // baseCube.name = "start"
-// scene.add(baseCube)
+addBloomObj(baseCube)
 
 const geo2 = new T.BoxGeometry(1, 1, 1)
 const material2 = new T.MeshStandardMaterial({ color: 0xffffff });
@@ -372,10 +384,10 @@ function onMouseDown(event) {
 
 function animate() {
   requestAnimationFrame(animate)
-  renderer2.render(scene2, camera)
-  renderer.render(scene, camera);
   camera.updateProjectionMatrix()
   controls.update()
-  bloomComposer.render()
+  bloomComposer.rend
+  renderer2.render(scene2, camera)
+  renderer.render(scene, camera);
 }
 animate()
