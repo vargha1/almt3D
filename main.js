@@ -10,10 +10,9 @@ import { RectAreaLightUniformsLib } from "three/examples/jsm/Addons.js";
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { MaskPass } from 'three/examples/jsm/postprocessing/MaskPass.js';
-import { ClearPass } from 'three/examples/jsm/postprocessing/ClearPass.js';
-import { ClearMaskPass } from "three/examples/jsm/postprocessing/MaskPass.js";
+import { CopyShader } from "three/examples/jsm/shaders/CopyShader.js";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 
 const scene = new T.Scene();
 const scene2 = new T.Scene();
@@ -45,30 +44,29 @@ renderer2.domElement.style.pointerEvents = "none";
 document.getElementById('canvasHolder').appendChild(renderer2.domElement);
 document.getElementById('canvasHolder').appendChild(renderer.domElement);
 
-function addBloomObj(obj) {
-  maskPass.scene.add(obj)
-}
 
-const renderScene = new RenderPass(scene, camera);
 var bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1, 0.4, 0);
 bloomPass.threshold = 0;
-bloomPass.strength = 1;
-bloomPass.radius = 0.5;
+bloomPass.strength = 2;
+bloomPass.radius = 0.4;
 
-const outputPass = new OutputPass();
 const bloomComposer = new EffectComposer(renderer);
-bloomComposer.renderToScreen = true;
+const renderScene = new RenderPass(scene, camera);
+
+const maskPass1 = new MaskPass(scene, camera);
+maskPass1.clear = true;
+
+const maskPass2 = new MaskPass(scene, camera);
+maskPass2.inverse = true;
+
+const shaderPass = new ShaderPass(CopyShader);
+shaderPass.renderToScreen = true;
 bloomComposer.addPass(renderScene);
+bloomComposer.addPass(maskPass1);
 bloomComposer.addPass(bloomPass);
-bloomComposer.addPass(outputPass);
-
-const maskPass = new MaskPass(scene, camera);
-bloomComposer.addPass(maskPass);
-
-const clearPass = new ClearMaskPass();
-bloomComposer.addPass(clearPass);
-
-
+bloomComposer.addPass(maskPass2)
+bloomComposer.addPass(shaderPass)
+bloomComposer.renderToScreen = true;
 
 // var font = loader2.parse(HelvetikerFont)
 // const geo = new TextGeometry("My name is Vargha\nand i am a frontend web\ndeveloper", {
@@ -191,6 +189,12 @@ controls.update()
 loader.load("dake_GLTF.gltf", function (gltf) {
   var mesh = gltf.scene;
   mesh.position.set(0, 1, 0)
+  mesh.traverse((obj) => {
+    if (obj.name == "polySurfaceShape2_1") {
+      obj.layers.enable(12)
+      obj.layers.set(12)
+    }
+  })
   scene.add(mesh)
 })
 
@@ -200,7 +204,7 @@ const baseCube = new T.Mesh(geometry, material);
 baseCube.receiveShadow = true
 baseCube.position.set(600, -2, 0)
 // baseCube.name = "start"
-addBloomObj(baseCube)
+// addBloomObj(baseCube)
 
 const geo2 = new T.BoxGeometry(1, 1, 1)
 const material2 = new T.MeshStandardMaterial({ color: 0xffffff });
@@ -276,8 +280,6 @@ rectL2.position.set(-15.7, 15, 0)
 rectL2.lookAt(-15.7, 14, 0)
 // scene.add(rectL2)
 
-const rectLHelper = new RectAreaLightHelper(rectL1)
-const rectLHelper2 = new RectAreaLightHelper(rectL2)
 // scene.add(rectLHelper)
 // scene.add(rectLHelper2)
 // // const pl2Helper = new T.PointLightHelper(pl2, 1);
@@ -324,6 +326,7 @@ function onMouseDown(event) {
 
   let intersections = raycaster.intersectObjects(scene.children, true);
   if (intersections.length > 0) {
+    console.log(intersections[0].object);
     if (intersections[0].object.name == "start") {
       gsap.to(camera.position, {
         x: 2,
@@ -344,50 +347,32 @@ function onMouseDown(event) {
       document.getElementById("video").currentTime -= 5
     }
     if (intersections[0].object.name == "polySurfaceShape2_1") {
-      scene2.remove(intersections[0].object)
-      scene.remove(intersections[0].object)
-      console.log("done");
-      console.log(intersections[0].object);
     }
   }
   camera.updateProjectionMatrix()
   controls.update()
 }
 
-// function onMouseDown2(event) {
-//   camera.updateProjectionMatrix()
-//   controls.update()
-//   const coords = new T.Vector2(
-//     (event.clientX / renderer.domElement.clientWidth) * 2 - 1,
-//     -((event.clientY / renderer.domElement.clientHeight) * 2 - 1),
-//   )
-//   raycaster2.setFromCamera(coords, camera)
-
-//   let intersections = raycaster2.intersectObjects(mesh, false);
-//   if (intersections.length > 0) {
-//     if (intersections[0].object.name == "start") {
-//       gsap.to(camera.position, {
-//         x: 2,
-//         y: 8,
-//         z: 0,
-//         duration: 2,
-//         ease: "none",
-//         onUpdate: function () {
-//           controls.target = new T.Vector3(0, 8, 0)
-//           controls.update()
-//         },
-//       },)
-//     }
-//   }
-// }
-
+camera.layers.enable(0);
+camera.layers.set(0);
+maskPass1.enabled = false;
+bloomPass.enabled = false;
+maskPass2.enabled = true;
+bloomComposer.render();
 
 function animate() {
   requestAnimationFrame(animate)
   camera.updateProjectionMatrix()
   controls.update()
-  bloomComposer.rend
-  renderer2.render(scene2, camera)
-  renderer.render(scene, camera);
+  // renderer2.render(scene2, camera)
+  // renderer.render(scene, camera);
+
+
+  camera.layers.enable(12);
+  camera.layers.set(12);
+  maskPass1.enabled = true;
+  bloomPass.enabled = true;
+  maskPass2.enabled = false;
+  bloomComposer.render();
 }
 animate()
