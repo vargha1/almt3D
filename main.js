@@ -5,19 +5,17 @@ import { CSS3DObject, CSS3DRenderer, OrbitControls } from "three/examples/jsm/Ad
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { TextGeometry } from "three/examples/jsm/Addons.js";
 import { FontLoader } from "three/examples/jsm/Addons.js";
-import { RectAreaLightHelper } from "three/examples/jsm/Addons.js";
-import { RectAreaLightUniformsLib } from "three/examples/jsm/Addons.js";
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { MaskPass } from 'three/examples/jsm/postprocessing/MaskPass.js';
-import { CopyShader } from "three/examples/jsm/shaders/CopyShader.js";
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';;
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { Reflector } from "three/examples/jsm/Addons.js";
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader';
 
 const scene = new T.Scene();
 const scene2 = new T.Scene();
 const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1400)
-const loader = new GLTFLoader().setPath("./New2/");
+const loader = new GLTFLoader().setPath("./dake/");
 const loader2 = new FontLoader()
 const renderer = new T.WebGLRenderer({ antialias: true });
 const renderer2 = new CSS3DRenderer();
@@ -41,32 +39,103 @@ renderer2.domElement.style.pointerEvents = "none";
 // renderer2.domElement.classList.add("z-[4]")
 // renderer2.domElement.classList.add("w-[1000px]")
 // renderer2.domElement.classList.add("h-[500px]")
-document.getElementById('canvasHolder').appendChild(renderer2.domElement);
-document.getElementById('canvasHolder').appendChild(renderer.domElement);
+// document.getElementById('canvasHolder').appendChild(renderer2.domElement);
 
+camera.position.set(-35, 45, -40)
+
+document.addEventListener("DOMContentLoaded", () => {
+  window.start = () => {
+    document.querySelector("#startSection").classList.add("hidden")
+    gsap.to(camera.position, {
+      x: -18,
+      y: 5,
+      z: 45,
+      duration: 1.4,
+      ease: "none",
+      onUpdate: function () {
+        controls.target = new T.Vector3(0, 13, 0)
+        controls.update()
+      },
+    },)
+    document.getElementById("canvasHolder").appendChild(renderer.domElement);
+  }
+})
+
+loader.load("dake02.gltf", function (gltf) {
+  var mesh = gltf.scene;
+  mesh.position.set(0, 3, 0);
+  const planeGeo = new T.PlaneGeometry(250, 250)
+  const reflector = new Reflector(planeGeo, {
+    clipBias: 0.003,
+    textureWidth: window.innerWidth * window.devicePixelRatio,
+    textureHeight: window.innerHeight * window.devicePixelRatio,
+    color: 0x777777
+  });
+
+  const transparentMaterial = new T.MeshStandardMaterial({
+    color: 0x777777,
+    transparent: true,
+    opacity: 0.95
+  });
+  const transparentPlane = new T.Mesh(geometry, transparentMaterial);
+  transparentPlane.position.y = 1.02;  // Slightly above the reflective surface
+  scene.add(transparentPlane);
+
+  reflector.position.y = 1.01
+  reflector.rotation.x = - Math.PI / 2;
+  scene.add(reflector);
+  // const object1 = mesh.children[0].children[0].getObjectByName("M_Dake973Shape")
+  mesh.children[0].children[0].getObjectByName("M_Dake13").layers.set(2)
+  mesh.children[0].children[0].getObjectByName("M_Dake6PIV").layers.set(1)
+  // object1.material.map = new TextureLoader().load("images/vendingMachineMenu.png")
+  scene.add(mesh)
+})
 
 var bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1, 0.4, 0);
 bloomPass.threshold = 0;
-bloomPass.strength = 2;
+bloomPass.strength = 0.4;
 bloomPass.radius = 0.4;
 
-const bloomComposer = new EffectComposer(renderer);
 const renderScene = new RenderPass(scene, camera);
-
-const maskPass1 = new MaskPass(scene, camera);
-maskPass1.clear = true;
-
-const maskPass2 = new MaskPass(scene, camera);
-maskPass2.inverse = true;
-
-const shaderPass = new ShaderPass(CopyShader);
-shaderPass.renderToScreen = true;
+// Composer for rendering the scene with bloom
+const bloomComposer = new EffectComposer(renderer);
+bloomComposer.renderToScreen = false; // we will combine this later
 bloomComposer.addPass(renderScene);
-bloomComposer.addPass(maskPass1);
 bloomComposer.addPass(bloomPass);
-bloomComposer.addPass(maskPass2)
-bloomComposer.addPass(shaderPass)
-bloomComposer.renderToScreen = true;
+
+const fxaaPass = new ShaderPass(FXAAShader);
+// Composer for the final render
+const finalComposer = new EffectComposer(renderer);
+finalComposer.addPass(renderScene);
+// finalComposer.addPass(fxaaPass);
+// Render only the bloom layer
+renderer.autoClear = false;
+
+const finalPass = new ShaderPass(new T.ShaderMaterial({
+  uniforms: {
+    baseTexture: { value: null },
+    bloomTexture: { value: bloomComposer.renderTarget2.texture }
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D baseTexture;
+    uniform sampler2D bloomTexture;
+    varying vec2 vUv;
+    void main() {
+      vec4 base = texture2D(baseTexture, vUv);
+      vec4 bloom = texture2D(bloomTexture, vUv);
+      gl_FragColor = base + bloom;
+    }
+  `
+}));
+finalPass.needsSwap = true;
+finalComposer.addPass(finalPass);
 
 // var font = loader2.parse(HelvetikerFont)
 // const geo = new TextGeometry("My name is Vargha\nand i am a frontend web\ndeveloper", {
@@ -107,52 +176,11 @@ bloomComposer.renderToScreen = true;
 // )
 
 const controls = new OrbitControls(camera, renderer.domElement)
-// controls.enablePan = false
-// controls.minPolarAngle = 1;
-// controls.maxPolarAngle = 1.2;
-controls.minDistance = 50;
+controls.enablePan = false
+controls.minPolarAngle = 1;
+controls.maxPolarAngle = 1.7;
+controls.minDistance = 10;
 controls.maxDistance = 1000;
-controls.update()
-
-const positions = [
-  {
-    x: 0,
-    y: 1,
-    z: 3,
-    duration: 2,
-    ease: "none",
-    onUpdate: function () {
-      controls.target = new T.Vector3(0, 3, 4.5)
-      controls.update()
-    },
-  },
-  {
-    x: 0,
-    y: 4,
-    z: -1.3,
-    duration: 2,
-    ease: "none",
-    onUpdate: function () {
-      controls.target = new T.Vector3(3, 4, -1.3)
-      controls.update()
-    },
-  },
-  {
-    x: 0,
-    y: 3.5,
-    z: -4,
-    duration: 2,
-    ease: "none",
-    onUpdate: function () {
-      controls.target = new T.Vector3(0, 4, -5)
-      controls.update()
-    },
-  },
-]
-
-camera.position.set(-12, 8, 12)
-controls.target = new T.Vector3(0, 4, 12)
-camera.updateProjectionMatrix()
 controls.update()
 
 // document.querySelectorAll('button').forEach((btn, key) => {
@@ -186,18 +214,6 @@ controls.update()
 //   })
 // })
 
-loader.load("dake_GLTF.gltf", function (gltf) {
-  var mesh = gltf.scene;
-  mesh.position.set(0, 1, 0)
-  mesh.traverse((obj) => {
-    if (obj.name == "polySurfaceShape2_1") {
-      obj.layers.enable(12)
-      obj.layers.set(12)
-    }
-  })
-  scene.add(mesh)
-})
-
 const geometry = new T.BoxGeometry(200, 5, 200);
 const material = new T.MeshStandardMaterial({ color: 0xffff00 });
 const baseCube = new T.Mesh(geometry, material);
@@ -216,16 +232,16 @@ for (let i = 0; i < 2; i++) {
   for (let j = 0; j < 4; j++) {
     let cube = new T.Mesh(geo2, material2);
     cube = new T.Mesh(geo2, cube.material.clone())
-    cube.position.set(0, 1, j + 27 + space)
+    cube.position.set(0, 5, j + 27 + space)
     cube.name = firstLayer[j].name
     cube.material.color.set(firstLayer[j].color)
     space += 0.3
     if (i >= 1) {
-      cube.position.set(0, 2.2, j + 27 + space - 0.3)
+      cube.position.set(0, 7.2, j + 27 + space - 0.3)
       cube.name = secondLayer[j].name
       cube.material.color.set(secondLayer[j].color)
     }
-    scene.add(cube)
+    // scene.add(cube)
   }
 }
 
@@ -247,47 +263,36 @@ const bigCube = new T.Mesh(geo3, [
 const bigCube2 = new T.Mesh(geo4, material);
 bigCube.position.set(0, 5, 29.25)
 bigCube2.position.set(0, 5, 29.25)
-scene.add(bigCube)
-scene.add(bigCube2)
-scene2.add(bigCube)
-scene2.add(bigCube2)
+// scene.add(bigCube)
+// scene.add(bigCube2)
+// scene2.add(bigCube)
+// scene2.add(bigCube2)
 
-const ambientLight = new T.AmbientLight(0xffffff, 5)
-scene.add(ambientLight)
+const ambientLight = new T.AmbientLight(0xffffff, 0.2)
+// scene.add(ambientLight)
 // const pl1 = new T.PointLight(0xffff, 9000);
 // pl1.position.set(0, 20, 80)
 // pl1.castShadow = true
 // scene.add(pl1);
-const spl1 = new T.SpotLight(0x00ffff, 40000, 78, Math.PI + 0.1, 10, 1.8)
-const spl2 = new T.SpotLight(0xff00ff, 40000, 85, Math.PI + 0.1, 10, 1.8)
-const spl3 = new T.SpotLight(0x00ffff, 40000, 85, Math.PI + 0.1, 10, 1.8)
+const spl1 = new T.SpotLight(0xffff00, 10000, 85, Math.PI + 0.1, 10, 1.8)
+const spl2 = new T.SpotLight(0xff00ff, 10000, 85, Math.PI + 0.1, 10, 1.8)
+const spl3 = new T.SpotLight(0xffff00, 10000, 85, Math.PI + 0.1, 10, 1.8)
 spl1.position.set(25, 65, 10)
 spl1.target.position.set(25, -2, 10)
 spl2.position.set(15, 65, -15)
 spl2.target.position.set(15, -2, -15)
 spl3.position.set(1, 65, 7)
 spl3.target.position.set(1, -2, 7)
-// scene.add(spl1);
-// scene.add(spl2);
-// scene.add(spl3);
+scene.add(spl1);
+scene.add(spl2);
+scene.add(spl3);
 
-const rectL1 = new T.RectAreaLight(0xffff00, 10, 0.1, 10)
-rectL1.position.set(1.1, 15, 0)
-rectL1.lookAt(1.1, 14, 0)
-// scene.add(rectL1)
-const rectL2 = new T.RectAreaLight(0xffff00, 10, 0.1, 28)
-rectL2.position.set(-15.7, 15, 0)
-rectL2.lookAt(-15.7, 14, 0)
-// scene.add(rectL2)
-
-// scene.add(rectLHelper)
-// scene.add(rectLHelper2)
 // // const pl2Helper = new T.PointLightHelper(pl2, 1);
 // scene.add(pl2Helper)
-// const pl3 = new T.PointLight(0xffffff, 5000);
-// pl3.position.set(80, 10, 0)
-// pl3.castShadow = true
-// scene.add(pl3);
+const pl3 = new T.PointLight(0xffff00, 1000);
+pl3.position.set(-20, 18, 0)
+pl3.castShadow = true
+scene.add(pl3);
 // const pl4 = new T.PointLight(0xffffff, 5000);
 // pl4.position.set(0, 10, -80)
 // pl4.castShadow = true
@@ -304,8 +309,8 @@ rectL2.lookAt(-15.7, 14, 0)
 // dl1.castShadow = true
 // camera.add(dl1)
 // scene.add(camera)
-// const dl2 = new T.DirectionalLight(0xffffff, 2)
-// dl2.position.set(0, 50, 0)
+// const dl2 = new T.DirectionalLight(0xffffff, 10)
+// dl2.position.set(0, 25, 0)
 // dl2.castShadow = true
 // scene.add(dl2)
 
@@ -327,52 +332,41 @@ function onMouseDown(event) {
   let intersections = raycaster.intersectObjects(scene.children, true);
   if (intersections.length > 0) {
     console.log(intersections[0].object);
-    if (intersections[0].object.name == "start") {
+    if (intersections[0].object.name == "foodsPIV") {
       gsap.to(camera.position, {
-        x: 2,
-        y: 8,
-        z: 0,
-        duration: 2,
+        x: 18.88,
+        y: 7.2,
+        z: 1.87,
+        duration: 1.4,
         ease: "none",
         onUpdate: function () {
-          controls.target = new T.Vector3(0, 8, 0)
+          controls.target = new T.Vector3(3, 8, -17)
           controls.update()
         },
-      },)
-    } else if (intersections[0].object.name == "stop") {
-      document.getElementById("video").pause()
-    } else if (intersections[0].object.name == "forward") {
-      document.getElementById("video").currentTime += 5
-    } else if (intersections[0].object.name == "rewind") {
-      document.getElementById("video").currentTime -= 5
-    }
-    if (intersections[0].object.name == "polySurfaceShape2_1") {
+      })
     }
   }
   camera.updateProjectionMatrix()
   controls.update()
 }
 
-camera.layers.enable(0);
-camera.layers.set(0);
-maskPass1.enabled = false;
-bloomPass.enabled = false;
-maskPass2.enabled = true;
-bloomComposer.render();
+// camera.layers.enable(0);
+// camera.layers.set(0);
+// maskPass1.enabled = false;
+// bloomPass.enabled = false;
+// maskPass2.enabled = true;
+// bloomComposer.render();
 
 function animate() {
+  camera.layers.set(1);
+  bloomComposer.render();
+  camera.layers.set(0); // reset to render all layers
+
+  // Combine the base scene and the bloom
+  finalComposer.passes[1].uniforms.baseTexture.value = renderer.getRenderTarget().texture;
+  finalComposer.render();
   requestAnimationFrame(animate)
   camera.updateProjectionMatrix()
   controls.update()
-  // renderer2.render(scene2, camera)
-  // renderer.render(scene, camera);
-
-
-  camera.layers.enable(12);
-  camera.layers.set(12);
-  maskPass1.enabled = true;
-  bloomPass.enabled = true;
-  maskPass2.enabled = false;
-  bloomComposer.render();
 }
 animate()
