@@ -15,6 +15,7 @@ import { VideoTexture } from "three";
 document.getElementById("video").play()
 const video = new VideoTexture(document.getElementById("video"))
 var isFinished = false
+const audio = document.getElementById("audio");
 
 var click = new Audio('Sounds/click.mp3');
 var whoosh = new Audio("Sounds/whoosh.mp3")
@@ -53,6 +54,8 @@ camera.position.set(-35, 45, -40)
 
 document.addEventListener("DOMContentLoaded", () => {
   window.start = () => {
+    audio.setAttribute('src', "CityCrowd.mp3")
+    audio.play()
     document.querySelector("#startSection").classList.add("hidden")
     gsap.to(camera.position, {
       x: -18,
@@ -108,8 +111,8 @@ loader.load("dake03.gltf", function (gltf) {
   const object1 = mesh.children[0].children[0].getObjectByName("D10PIV")
   const object2 = mesh.children[0].children[0].getObjectByName("D09PIV")
   const object3 = mesh.children[0].children[0].getObjectByName("D05PIV")
-  const object4 = mesh.children[0].children[0].getObjectByName("D09PIV")
-  const object5 = mesh.children[0].children[0].getObjectByName("D09PIV")
+  const object4 = mesh.children[0].children[0].getObjectByName("D06PIV")
+  const object5 = mesh.children[0].children[0].getObjectByName("D07PIV")
   mesh.children[0].children[0].getObjectByName("M_Dake13").position.y = 0.01;
   mesh.children[0].children[0].getObjectByName("M_Dake13").material.transparent = true;
   mesh.children[0].children[0].getObjectByName("M_Dake13").material.opacity = 0.90;
@@ -217,82 +220,60 @@ loader.load("dake03.gltf", function (gltf) {
 
     // درخواست رندر مجدد صحنه (اگر نیاز است)
   }
-  // if (object4) {
-  //   new TextureLoader().load("images/BSOD.png", (texture) => {
-  //     // تنظیمات تکسچر
-  //     texture.encoding = T.sRGBEncoding;
-  //     texture.flipY = false;  // ممکن است نیاز باشد این را تغییر دهید
+  if (object4) {
+    // اعمال متریال به آبجکت
+    object4.material = new T.MeshStandardMaterial({ map: video });
+    object4.material.map.repeat.set(20, 15);
+    object4.material.map.wrapS = 1000;
+    object4.material.map.wrapT = 1002;
+    // object4.material.needsUpdate = true;
+    object4.material.toneMapped = false;
+    // بررسی UV mapping
+    if (!object4.geometry.attributes.uv) {
+      console.warn("No UV mapping found on the object. Texture may not display correctly.");
+    } else {
+      // اگر نیاز به تنظیم UV باشد، می‌توانید اینجا انجام دهید
+      // object4.geometry.attributes.uv.needsUpdate = true;
+    }
 
-  //     // تنظیم wrapping و filtering
-  //     texture.wrapS = texture.wrapT = T.ClampToEdgeWrapping;
-  //     texture.minFilter = T.LinearFilter;
-  //     texture.magFilter = T.LinearFilter;
-  //     texture.repeat.set(15, 10);
-  //     texture.wrapS = 1000;
-  //     texture.wrapT = 1000;
-  //     texture.offset.set(0.35, -0.05);
-  //     // texture.rotation = 0;
-  //     // ایجاد متریال جدید
-  //     const material2 = new T.MeshStandardMaterial({
-  //       map: texture,
-  //     });
+    // درخواست رندر مجدد صحنه (اگر نیاز است)
+  }
+  if (object5) {
+    // اعمال متریال به آبجکت
+    object5.material = new T.MeshStandardMaterial({ map: video });
+    object5.material.map.repeat.set(20, 15);
+    object5.material.map.wrapS = 1000;
+    object5.material.map.wrapT = 1002;
+    // object5.material.needsUpdate = true;
+    object5.material.toneMapped = false;
+    // بررسی UV mapping
+    if (!object5.geometry.attributes.uv) {
+      console.warn("No UV mapping found on the object. Texture may not display correctly.");
+    } else {
+      // اگر نیاز به تنظیم UV باشد، می‌توانید اینجا انجام دهید
+      // object5.geometry.attributes.uv.needsUpdate = true;
+    }
 
-  //     // اعمال متریال به آبجکت
-  //     object2.material = material2;
-  //     object2.material.needsUpdate = true;
-  //     object2.material.toneMapped = true;
-  //     // بررسی UV mapping
-  //     if (!object2.geometry.attributes.uv) {
-  //       console.warn("No UV mapping found on the object. Texture may not display correctly.");
-  //     } else {
-  //       // اگر نیاز به تنظیم UV باشد، می‌توانید اینجا انجام دهید
-  //       // object2.geometry.attributes.uv.needsUpdate = true;
-  //     }
+    // درخواست رندر مجدد صحنه (اگر نیاز است)
+  }
+  if (object5) {
+    // اعمال متریال به آبجکت
+    object5.material = new T.MeshStandardMaterial({ map: video });
+    object5.material.map.repeat.set(20, 15);
+    object5.material.map.wrapS = 1000;
+    object5.material.map.wrapT = 1002;
+    // object5.material.needsUpdate = true;
+    object5.material.toneMapped = false;
+    // بررسی UV mapping
+    if (!object5.geometry.attributes.uv) {
+      console.warn("No UV mapping found on the object. Texture may not display correctly.");
+    } else {
+      // اگر نیاز به تنظیم UV باشد، می‌توانید اینجا انجام دهید
+      // object5.geometry.attributes.uv.needsUpdate = true;
+    }
 
-  //     // درخواست رندر مجدد صحنه (اگر نیاز است)
-  //     if (renderer && scene && camera) {
-  //       renderer.render(scene, camera);
-  //     }
-  //   });
-  // }
-  // if (object5) {
-  //   new TextureLoader().load("images/BSOD.png", (texture) => {
-  //     // تنظیمات تکسچر
-  //     texture.encoding = T.sRGBEncoding;
-  //     texture.flipY = false;  // ممکن است نیاز باشد این را تغییر دهید
-
-  //     // تنظیم wrapping و filtering
-  //     texture.wrapS = texture.wrapT = T.ClampToEdgeWrapping;
-  //     texture.minFilter = T.LinearFilter;
-  //     texture.magFilter = T.LinearFilter;
-  //     texture.repeat.set(15, 10);
-  //     texture.wrapS = 1000;
-  //     texture.wrapT = 1000;
-  //     texture.offset.set(0.35, -0.05);
-  //     // texture.rotation = 0;
-  //     // ایجاد متریال جدید
-  //     const material2 = new T.MeshStandardMaterial({
-  //       map: texture,
-  //     });
-
-  //     // اعمال متریال به آبجکت
-  //     object2.material = material2;
-  //     object2.material.needsUpdate = true;
-  //     object2.material.toneMapped = true;
-  //     // بررسی UV mapping
-  //     if (!object2.geometry.attributes.uv) {
-  //       console.warn("No UV mapping found on the object. Texture may not display correctly.");
-  //     } else {
-  //       // اگر نیاز به تنظیم UV باشد، می‌توانید اینجا انجام دهید
-  //       // object2.geometry.attributes.uv.needsUpdate = true;
-  //     }
-
-  //     // درخواست رندر مجدد صحنه (اگر نیاز است)
-  //     if (renderer && scene && camera) {
-  //       renderer.render(scene, camera);
-  //     }
-  //   });
-  // }
+    // درخواست رندر مجدد صحنه (اگر نیاز است)
+  }
 
   scene.add(mesh)
 })
@@ -549,6 +530,21 @@ function onMouseDown(event) {
         ease: "none",
         onUpdate: function () {
           controls.target = new T.Vector3(3, 8, -17)
+          controls.update()
+        },
+      })
+    }
+    if (intersections[0].object.name == "aboutPIV") {
+      click.play()
+      whoosh.play()
+      gsap.to(camera.position, {
+        x: 28,
+        y: 40,
+        z: 30,
+        duration: 1.4,
+        ease: "none",
+        onUpdate: function () {
+          controls.target = new T.Vector3(0, 3, 0)
           controls.update()
         },
       })
