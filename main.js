@@ -278,6 +278,11 @@ loader.load("dake03.gltf", function (gltf) {
   scene.add(mesh)
 })
 
+const cube = new T.Mesh(new T.BoxGeometry(1.5, 1, 0.1), new T.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0 }))
+cube.position.set(13.3, 4.9, -0.8)
+cube.lookAt(0, 5, -25)
+cube.name = "back"
+scene.add(cube)
 var bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1, 0.4, 0);
 bloomPass.threshold = 0;
 bloomPass.strength = 0.1;
@@ -364,8 +369,8 @@ finalPass.needsSwap = true;
 const controls = new OrbitControls(camera, renderer.domElement)
 // controls.enablePan = false
 controls.minPolarAngle = 1.15;
-controls.maxPolarAngle = 1.7;
-controls.minDistance = 15;
+controls.maxPolarAngle = 1.5;
+controls.minDistance = 0;
 controls.maxDistance = 80;
 controls.rotateSpeed = 0.5;
 controls.update()
@@ -533,6 +538,7 @@ function onMouseDown(event) {
           controls.update()
         },
       })
+      controls.enabled = false;
     }
     if (intersections[0].object.name == "aboutPIV") {
       click.play()
@@ -548,6 +554,22 @@ function onMouseDown(event) {
           controls.update()
         },
       })
+    }
+    if (intersections[0].object.name == "back") {
+      click.play()
+      whoosh.play()
+      gsap.to(camera.position, {
+        x: -18,
+        y: 5,
+        z: 45,
+        duration: 1.4,
+        ease: "none",
+        onUpdate: function () {
+          controls.target = new T.Vector3(0, 13, 0)
+          controls.update()
+        },
+      })
+      controls.enabled = true;
     }
   }
   camera.updateProjectionMatrix()
