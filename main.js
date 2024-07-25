@@ -10,8 +10,11 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';;
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { Reflector } from "three/examples/jsm/Addons.js";
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader';
 
+var click = new Audio('Sounds/click.mp3');
+var whoosh = new Audio("Sounds/whoosh.mp3")
+var ding = new Audio("Sounds/ding.mp3")
+var bloop = new Audio("Sounds/bloop.mp3")
 const scene = new T.Scene();
 const scene2 = new T.Scene();
 const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1400)
@@ -58,12 +61,16 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     },)
     document.getElementById("canvasHolder").appendChild(renderer.domElement);
+    click.play()
+    whoosh.play()
+    window.setTimeout(() => { ding.play() }, 1000)
+
   }
 })
 
 loader.load("dake02.gltf", function (gltf) {
   var mesh = gltf.scene;
-  mesh.position.set(0, 3, 0);
+  mesh.position.set(0, 1, 0);
   const planeGeo = new T.PlaneGeometry(250, 250)
   const reflector = new Reflector(planeGeo, {
     clipBias: 0.003,
@@ -79,37 +86,41 @@ loader.load("dake02.gltf", function (gltf) {
   });
   const transparentPlane = new T.Mesh(geometry, transparentMaterial);
   transparentPlane.position.y = 1.02;  // Slightly above the reflective surface
-  scene.add(transparentPlane);
+  // scene.add(transparentPlane);
 
-  reflector.position.y = 1.01
+  reflector.position.y = 0
   reflector.rotation.x = - Math.PI / 2;
   scene.add(reflector);
+  mesh.children[0].children[0].traverseVisible((obj) => {
+    obj.layers.set(0)
+  })
   // const object1 = mesh.children[0].children[0].getObjectByName("M_Dake973Shape")
-  mesh.children[0].children[0].getObjectByName("M_Dake13").layers.set(2)
-  mesh.children[0].children[0].getObjectByName("M_Dake6PIV").layers.set(1)
+  mesh.children[0].children[0].getObjectByName("M_Dake13").position.y = 0.01;
+  mesh.children[0].children[0].getObjectByName("M_Dake13").material.transparent = true;
+  mesh.children[0].children[0].getObjectByName("M_Dake13").material.opacity = 0.93;
+  mesh.children[0].children[0].getObjectByName("M_Dake990PIV").position.y = 0.05
   // object1.material.map = new TextureLoader().load("images/vendingMachineMenu.png")
   scene.add(mesh)
 })
 
 var bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1, 0.4, 0);
 bloomPass.threshold = 0;
-bloomPass.strength = 0.4;
+bloomPass.strength = 0.1;
 bloomPass.radius = 0.4;
 
 const renderScene = new RenderPass(scene, camera);
 // Composer for rendering the scene with bloom
+const baseComposer = new EffectComposer(renderer);
+baseComposer.renderToScreen = false;
+baseComposer.addPass(renderScene);
+
 const bloomComposer = new EffectComposer(renderer);
-bloomComposer.renderToScreen = false; // we will combine this later
+bloomComposer.renderToScreen = false;
 bloomComposer.addPass(renderScene);
 bloomComposer.addPass(bloomPass);
 
-const fxaaPass = new ShaderPass(FXAAShader);
-// Composer for the final render
+// Final composer for rendering the full scene
 const finalComposer = new EffectComposer(renderer);
-finalComposer.addPass(renderScene);
-// finalComposer.addPass(fxaaPass);
-// Render only the bloom layer
-renderer.autoClear = false;
 
 const finalPass = new ShaderPass(new T.ShaderMaterial({
   uniforms: {
@@ -177,10 +188,11 @@ finalComposer.addPass(finalPass);
 
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.enablePan = false
-controls.minPolarAngle = 1;
+controls.minPolarAngle = 1.15;
 controls.maxPolarAngle = 1.7;
-controls.minDistance = 10;
-controls.maxDistance = 1000;
+controls.minDistance = 15;
+controls.maxDistance = 80;
+controls.rotateSpeed = 0.5;
 controls.update()
 
 // document.querySelectorAll('button').forEach((btn, key) => {
@@ -274,9 +286,9 @@ const ambientLight = new T.AmbientLight(0xffffff, 0.2)
 // pl1.position.set(0, 20, 80)
 // pl1.castShadow = true
 // scene.add(pl1);
-const spl1 = new T.SpotLight(0xffff00, 10000, 85, Math.PI + 0.1, 10, 1.8)
-const spl2 = new T.SpotLight(0xff00ff, 10000, 85, Math.PI + 0.1, 10, 1.8)
-const spl3 = new T.SpotLight(0xffff00, 10000, 85, Math.PI + 0.1, 10, 1.8)
+const spl1 = new T.SpotLight(0xffff00, 15000, 85, Math.PI + 0.1, 10, 1.8)
+const spl2 = new T.SpotLight(0xff00ff, 15000, 85, Math.PI + 0.1, 10, 1.8)
+const spl3 = new T.SpotLight(0xffff00, 15000, 85, Math.PI + 0.1, 10, 1.8)
 spl1.position.set(25, 65, 10)
 spl1.target.position.set(25, -2, 10)
 spl2.position.set(15, 65, -15)
@@ -305,10 +317,10 @@ scene.add(pl3);
 // pl6.position.set(4, 7.5, 5.5)
 // pl6.castShadow = true
 // scene.add(pl6);
-// const dl1 = new T.DirectionalLight(0xffffff, 1.5)
-// dl1.castShadow = true
-// camera.add(dl1)
-// scene.add(camera)
+const dl1 = new T.DirectionalLight(0xffffff, 1.5)
+dl1.castShadow = true
+camera.add(dl1)
+scene.add(camera)
 // const dl2 = new T.DirectionalLight(0xffffff, 10)
 // dl2.position.set(0, 25, 0)
 // dl2.castShadow = true
@@ -331,10 +343,11 @@ function onMouseDown(event) {
 
   let intersections = raycaster.intersectObjects(scene.children, true);
   if (intersections.length > 0) {
-    console.log(intersections[0].object);
     if (intersections[0].object.name == "foodsPIV") {
+      click.play()
+      whoosh.play()
       gsap.to(camera.position, {
-        x: 18.88,
+        x: 17.88,
         y: 7.2,
         z: 1.87,
         duration: 1.4,
@@ -358,14 +371,22 @@ function onMouseDown(event) {
 // bloomComposer.render();
 
 function animate() {
-  camera.layers.set(1);
-  bloomComposer.render();
-  camera.layers.set(0); // reset to render all layers
+  requestAnimationFrame(animate);
 
-  // Combine the base scene and the bloom
-  finalComposer.passes[1].uniforms.baseTexture.value = renderer.getRenderTarget().texture;
-  finalComposer.render();
-  requestAnimationFrame(animate)
+  // camera.layers.set(0);
+  // baseComposer.render();
+
+  // // Render bloom only for the objects on layer 1
+  // camera.layers.set(1);
+  // bloomComposer.render();
+  // camera.layers.set(0); // reset to render all layers
+
+  // // Combine the base scene and the bloom
+  // finalComposer.passes[0].uniforms.baseTexture.value = baseComposer.renderTarget2.texture;
+  // renderer.setRenderTarget(null);
+  // renderer.clear();
+  // finalComposer.render();
+  renderer.render(scene, camera)
   camera.updateProjectionMatrix()
   controls.update()
 }
