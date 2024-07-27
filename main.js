@@ -387,8 +387,8 @@ finalComposer.addPass(outputPass);
 // )
 
 const controls = new OrbitControls(camera, renderer.domElement)
-// controls.enablePan = false
-controls.minPolarAngle = 1.3;
+controls.enablePan = false
+controls.minPolarAngle = 1.1;
 controls.maxPolarAngle = 1.73;
 controls.minDistance = 0;
 controls.maxDistance = 60;
