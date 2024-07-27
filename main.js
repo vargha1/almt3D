@@ -1,26 +1,25 @@
 import * as T from "three";
 import gsap from "gsap";
-import { CSS3DObject, CSS3DRenderer, OrbitControls } from "three/examples/jsm/Addons.js";
+import { CSS3DObject, CSS3DRenderer, OrbitControls, Reflector } from "three/examples/jsm/Addons.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { TextGeometry } from "three/examples/jsm/Addons.js";
-import { FontLoader } from "three/examples/jsm/Addons.js";
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';;
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
-import { Reflector } from "three/examples/jsm/Addons.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { TextureLoader } from "three";
 import { VideoTexture } from "three";
 
 document.getElementById("video").play()
 const video = new VideoTexture(document.getElementById("video"))
-var isFinished = false
 const audio = document.getElementById("audio");
 
 var click = new Audio('Sounds/click.mp3');
 var whoosh = new Audio("Sounds/whoosh.mp3")
 var ding = new Audio("Sounds/ding.mp3")
 var bloop = new Audio("Sounds/bloop.mp3")
+const darkMaterial = new T.MeshBasicMaterial({ color: 'black' });
+const materials = {};
 const scene = new T.Scene();
 const scene2 = new T.Scene();
 const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000)
@@ -29,25 +28,29 @@ const renderer = new T.WebGLRenderer({ antialias: true });
 const renderer2 = new CSS3DRenderer();
 renderer2.setSize(window.innerWidth, window.innerHeight)
 const div = document.createElement('div')
-div.style.width = "1024px"
-div.style.height = "1240px"
+div.style.width = "1240px"
+div.style.height = "1000px"
 div.innerHTML = `<iframe src="https://safahanbattery.ir/" frameborder="0" style="backface-visibility: hidden; width:100%; height:100%;"></iframe>`
 const css3DObject = new CSS3DObject(div)
-css3DObject.scale.set(0.0295, 0.0317, 1)
-css3DObject.position.set(-12.2, 138, -23)
-css3DObject.lookAt(172, 200, -22)
+css3DObject.scale.set(0.00695, 0.00405, 1)
+css3DObject.position.set(-8, 26.3, -3.7)
+css3DObject.lookAt(-172, 26.3, 0)
 css3DObject.updateMatrixWorld()
 scene2.add(css3DObject)
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-// renderer2.domElement.classList.add("absolute")
-// renderer2.domElement.style.pointerEvents = "none";
-// renderer2.domElement.classList.add("top-0")
-// renderer2.domElement.classList.add("z-[4]")
-// renderer2.domElement.classList.add("w-[1000px]")
-// renderer2.domElement.classList.add("h-[500px]")
-// document.getElementById('canvasHolder').appendChild(renderer2.domElement);
+// renderer.toneMapping = T.CineonToneMapping
+// renderer.toneMappingExposure = 1.5
+// renderer.outputColorSpace = T.SRGBColorSpace
+renderer.domElement.classList.add("absolute")
+renderer2.domElement.classList.add("absolute")
+renderer2.domElement.style.pointerEvents = "none";
+renderer2.domElement.classList.add("top-0")
+renderer2.domElement.classList.add("z-[-1]")
+renderer2.domElement.classList.add("w-[1000px]")
+renderer2.domElement.classList.add("h-[500px]")
+
 
 camera.position.set(-35, 45, -60)
 
@@ -71,6 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
     click.play()
     whoosh.play()
     window.setTimeout(() => { ding.play() }, 1000)
+
+    document.getElementById('canvasHolder').appendChild(renderer2.domElement);
 
     // window.setInterval(() => {
     //   scene.traverseVisible(obj => {
@@ -290,7 +295,7 @@ loader.load("dake03.gltf", function (gltf) {
 
     // درخواست رندر مجدد صحنه (اگر نیاز است)
   }
-
+  mesh.children[0].children[0].getObjectByName("M_Dake6PIV").layers.toggle(BLOOM_SCENE)
   scene.add(mesh)
   loading()
 })
@@ -308,50 +313,40 @@ cube.position.set(13.3, 4.9, -0.8)
 cube.lookAt(0, 5, -25)
 cube.name = "back"
 scene.add(cube)
-var bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1, 0.4, 0);
-bloomPass.threshold = 0;
-bloomPass.strength = 0.1;
-bloomPass.radius = 0.4;
+
+const BLOOM_SCENE = 1;
+const bloomLayer = new T.Layers();
+bloomLayer.set(BLOOM_SCENE);
 
 const renderScene = new RenderPass(scene, camera);
-// Composer for rendering the scene with bloom
-const baseComposer = new EffectComposer(renderer);
-baseComposer.renderToScreen = false;
-baseComposer.addPass(renderScene);
+const outputPass = new OutputPass();
+
+const bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+bloomPass.threshold = 0
+bloomPass.strength = 0.5
+bloomPass.radius = 0.2
 
 const bloomComposer = new EffectComposer(renderer);
 bloomComposer.renderToScreen = false;
 bloomComposer.addPass(renderScene);
 bloomComposer.addPass(bloomPass);
 
-// Final composer for rendering the full scene
-const finalComposer = new EffectComposer(renderer);
+const mixPass = new ShaderPass(
+  new T.ShaderMaterial({
+    uniforms: {
+      baseTexture: { value: null },
+      bloomTexture: { value: bloomComposer.renderTarget2.texture }
+    },
+    vertexShader: document.getElementById('vertexshader').textContent,
+    fragmentShader: document.getElementById('fragmentshader').textContent,
+  }), 'baseTexture'
+);
+mixPass.needsSwap = true;
 
-const finalPass = new ShaderPass(new T.ShaderMaterial({
-  uniforms: {
-    baseTexture: { value: null },
-    bloomTexture: { value: bloomComposer.renderTarget2.texture }
-  },
-  vertexShader: `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    uniform sampler2D baseTexture;
-    uniform sampler2D bloomTexture;
-    varying vec2 vUv;
-    void main() {
-      vec4 base = texture2D(baseTexture, vUv);
-      vec4 bloom = texture2D(bloomTexture, vUv);
-      gl_FragColor = base + bloom;
-    }
-  `
-}));
-finalPass.needsSwap = true;
-finalComposer.addPass(finalPass);
+const finalComposer = new EffectComposer(renderer);
+finalComposer.addPass(renderScene);
+finalComposer.addPass(mixPass);
+finalComposer.addPass(outputPass);
 
 // var font = loader2.parse(HelvetikerFont)
 // const geo = new TextGeometry("My name is Vargha\nand i am a frontend web\ndeveloper", {
@@ -491,9 +486,9 @@ const ambientLight = new T.AmbientLight(0xffffff, 0.2)
 // pl1.position.set(0, 20, 80)
 // pl1.castShadow = true
 // scene.add(pl1);
-const spl1 = new T.SpotLight(0xffff00, 15000, 85, Math.PI + 0.1, 10, 1.8)
-const spl2 = new T.SpotLight(0xff00ff, 15000, 85, Math.PI + 0.1, 10, 1.8)
-const spl3 = new T.SpotLight(0xffff00, 15000, 85, Math.PI + 0.1, 10, 1.8)
+const spl1 = new T.SpotLight(0xffff00, 10000, 85, Math.PI + 0.1, 10, 1.8)
+const spl2 = new T.SpotLight(0xff00ff, 10000, 85, Math.PI + 0.1, 10, 1.8)
+const spl3 = new T.SpotLight(0xffff00, 10000, 85, Math.PI + 0.1, 10, 1.8)
 spl1.position.set(25, 65, 10)
 spl1.target.position.set(25, -2, 10)
 spl2.position.set(15, 65, -15)
@@ -549,6 +544,9 @@ function onMouseDown(event) {
   let intersections = raycaster.intersectObjects(scene.children, true);
   if (intersections.length > 0) {
     console.log(intersections[0].object)
+    if (intersections[0].object.name != "M_Dake13") {
+      intersections[0].object.layers.toggle(BLOOM_SCENE)
+    }
     if (intersections[0].object.name == "foodsPIV") {
       click.play()
       whoosh.play()
@@ -614,6 +612,20 @@ function loading() {
   document.getElementById("loadingScreen").classList.add("hidden")
 }
 
+function darkenNonBloomed(obj) {
+  if (obj.isMesh && bloomLayer.test(obj.layers) === false) {
+    materials[obj.uuid] = obj.material;
+    obj.material = darkMaterial;
+  }
+}
+
+function restoreMaterial(obj) {
+  if (materials[obj.uuid]) {
+    obj.material = materials[obj.uuid];
+    delete materials[obj.uuid];
+  }
+}
+
 function addRainDrops() {
   const geometry = new T.SphereGeometry(0.15, 0.15, 0.15);
   const mat = new T.MeshStandardMaterial({ color: 0xffffff })
@@ -636,24 +648,42 @@ scene.traverseVisible(obj => {
   }
 })
 
-function animate() {
-  requestAnimationFrame(animate);
 
+
+// render the entire scene, then render bloom scene on top
+
+
+function animate() {
+  controls.update()
   // camera.layers.set(0);
   // baseComposer.render();
 
   // // Render bloom only for the objects on layer 1
   // camera.layers.set(1);
   // bloomComposer.render();
-  // camera.layers.set(0); // reset to render all layers
+  // camera.layers.set(0); // Reset to render all layers
 
   // // Combine the base scene and the bloom
   // finalComposer.passes[0].uniforms.baseTexture.value = baseComposer.renderTarget2.texture;
   // renderer.setRenderTarget(null);
   // renderer.clear();
   // finalComposer.render();
-  renderer.render(scene, camera)
+
+  // renderer.render(scene, camera)
+  // renderer2.render(scene2, camera)
+
+  // renderer.setRenderTarget(composer.renderTarget2);
+  // renderer.render(bloomScene, camera);
+  // renderer.setRenderTarget(null);
+
+  // composer.render()
+  scene.traverse(darkenNonBloomed);
+
+  bloomComposer.render();
+  scene.traverse(restoreMaterial);
+  finalComposer.render();
   // camera.updateProjectionMatrix()
-  controls.update()
+
+  requestAnimationFrame(animate);
 }
 animate()
