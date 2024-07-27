@@ -23,9 +23,8 @@ var ding = new Audio("Sounds/ding.mp3")
 var bloop = new Audio("Sounds/bloop.mp3")
 const scene = new T.Scene();
 const scene2 = new T.Scene();
-const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1400)
+const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000)
 const loader = new GLTFLoader().setPath("./New4/");
-const loader2 = new FontLoader()
 const renderer = new T.WebGLRenderer({ antialias: true });
 const renderer2 = new CSS3DRenderer();
 renderer2.setSize(window.innerWidth, window.innerHeight)
@@ -50,7 +49,7 @@ renderer.shadowMap.enabled = true;
 // renderer2.domElement.classList.add("h-[500px]")
 // document.getElementById('canvasHolder').appendChild(renderer2.domElement);
 
-camera.position.set(-35, 45, -40)
+camera.position.set(-35, 45, -60)
 
 document.addEventListener("DOMContentLoaded", () => {
   window.start = () => {
@@ -73,6 +72,23 @@ document.addEventListener("DOMContentLoaded", () => {
     whoosh.play()
     window.setTimeout(() => { ding.play() }, 1000)
 
+    // window.setInterval(() => {
+    //   scene.traverseVisible(obj => {
+    //     if (obj.name == "rain") {
+    //       gsap.to(obj.position, {
+    //         y: 0,
+    //         duration: 2,
+    //         ease: "none",
+    //       })
+    //     }
+    //   })
+    //   scene.traverseVisible(obj => {
+    //     if (obj.name == "rain") {
+    //       const [y] = Array(1).fill().map(() => T.MathUtils.randFloatSpread(45))
+    //       obj.position.y = 40 + y
+    //     }
+    //   })
+    // }, 2005);
   }
 })
 
@@ -276,7 +292,16 @@ loader.load("dake03.gltf", function (gltf) {
   }
 
   scene.add(mesh)
+  loading()
 })
+
+loader.setPath("./mars/")
+
+// loader.load("scene.gltf", function (gltf) {
+//   const mesh = gltf.scene;
+//   mesh.position.set(-25, 70, 25)
+//   scene.add(mesh)
+// })
 
 const cube = new T.Mesh(new T.BoxGeometry(1.5, 1, 0.1), new T.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0 }))
 cube.position.set(13.3, 4.9, -0.8)
@@ -326,7 +351,7 @@ const finalPass = new ShaderPass(new T.ShaderMaterial({
   `
 }));
 finalPass.needsSwap = true;
-// finalComposer.addPass(finalPass);
+finalComposer.addPass(finalPass);
 
 // var font = loader2.parse(HelvetikerFont)
 // const geo = new TextGeometry("My name is Vargha\nand i am a frontend web\ndeveloper", {
@@ -368,10 +393,10 @@ finalPass.needsSwap = true;
 
 const controls = new OrbitControls(camera, renderer.domElement)
 // controls.enablePan = false
-controls.minPolarAngle = 1.15;
-controls.maxPolarAngle = 1.5;
+controls.minPolarAngle = 1.3;
+controls.maxPolarAngle = 1.73;
 controls.minDistance = 0;
-controls.maxDistance = 80;
+controls.maxDistance = 60;
 controls.rotateSpeed = 0.5;
 controls.update()
 
@@ -509,7 +534,7 @@ scene.add(camera)
 const raycaster = new T.Raycaster()
 // const raycaster2 = new T.Raycaster()
 
-window.addEventListener('click', onMouseDown)
+window.addEventListener('pointerdown', onMouseDown)
 // window.addEventListener('click', onMouseDown2)
 
 function onMouseDown(event) {
@@ -529,12 +554,12 @@ function onMouseDown(event) {
       whoosh.play()
       gsap.to(camera.position, {
         x: 17.6,
-        y: 7.2,
+        y: 5.7,
         z: 3.57,
         duration: 1.4,
         ease: "none",
         onUpdate: function () {
-          controls.target = new T.Vector3(3, 8, -17)
+          controls.target = new T.Vector3(3, 6.5, -17)
           controls.update()
         },
       })
@@ -583,20 +608,36 @@ function onMouseDown(event) {
 // maskPass2.enabled = true;
 // bloomComposer.render();
 
+document.getElementById("loadingScreen").classList.add("z-[20]");
+document.getElementById("loadingScreen").innerHTML = `<img src="images/loading.gif" class="w-auto h-[200px]">`
 function loading() {
-  document.getElementById("loadingScreen").classList.remove("hidden");
-  document.getElementById("loadingScreen").classList.add("z-[20]");
-  document.getElementById("loadingScreen").innerHTML = `<img src="images/loading.gif" class="w-auto h-[200px]">`
-  setTimeout(() => {
-    document.getElementById("loadingScreen").classList.add("hidden");
-  }, 8000)
-
+  document.getElementById("loadingScreen").classList.add("hidden")
 }
-loading()
+
+function addRainDrops() {
+  const geometry = new T.SphereGeometry(0.15, 0.15, 0.15);
+  const mat = new T.MeshStandardMaterial({ color: 0xffffff })
+  const rainMesh = new T.Mesh(geometry, mat)
+  rainMesh.name = "rain";
+
+  const [x, z] = Array(2).fill().map(() => T.MathUtils.randFloatSpread(400))
+  const [y] = Array(1).fill().map(() => T.MathUtils.randFloatSpread(45))
+
+  rainMesh.position.set(x, 60 + y, z);
+  scene.add(rainMesh);
+}
+
+Array(1200).fill().forEach(addRainDrops)
+
+scene.traverseVisible(obj => {
+  if (obj.name == "rain") {
+    const [y] = Array(1).fill().map(() => T.MathUtils.randFloatSpread(8))
+    obj.position.y = 60 + y
+  }
+})
 
 function animate() {
   requestAnimationFrame(animate);
-
 
   // camera.layers.set(0);
   // baseComposer.render();
