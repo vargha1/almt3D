@@ -1,6 +1,6 @@
 import * as T from "three";
 import gsap from "gsap";
-import { CSS3DObject, CSS3DRenderer, OrbitControls, Reflector } from "three/examples/jsm/Addons.js";
+import { CSS3DObject, CSS3DRenderer, OrbitControls, Reflector, TextGeometry, FontLoader, Font } from "three/examples/jsm/Addons.js";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -9,10 +9,27 @@ import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { TextureLoader } from "three";
 import { VideoTexture } from "three";
+import HelvetikerFont from "three/examples/fonts/helvetiker_regular.typeface.json";
+
+const fontLoader = new FontLoader()
+const font = fontLoader.parse(HelvetikerFont)
+const textGeometry = new TextGeometry('BACK', {
+  font: font,
+  size: 0.4,
+  depth: 0.2,
+});
+textGeometry.computeBoundingBox();
+const textMat = new T.MeshStandardMaterial({ color: 0xffff00 })
+const textMesh = new T.Mesh(textGeometry, textMat)
+textMesh.name = "back2"
+textMesh.rotateY(30.34)
+textMesh.rotateX(31.8)
+textMesh.rotateZ(0.2)
 
 document.getElementById("video").play()
 const video = new VideoTexture(document.getElementById("video"))
 const audio = document.getElementById("audio");
+let imgTextureLoader;
 
 var click = new Audio('Sounds/click.mp3');
 var whoosh = new Audio("Sounds/whoosh.mp3")
@@ -24,19 +41,30 @@ const scene = new T.Scene();
 const scene2 = new T.Scene();
 const camera = new T.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000)
 const loader = new GLTFLoader().setPath("./New4/");
-const renderer = new T.WebGLRenderer({ antialias: true });
+const loader2 = new TextureLoader()
+
+const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
 const renderer2 = new CSS3DRenderer();
 renderer2.setSize(window.innerWidth, window.innerHeight)
 const div = document.createElement('div')
-div.style.width = "1240px"
-div.style.height = "1000px"
-div.innerHTML = `<iframe src="https://safahanbattery.ir/" frameborder="0" style="backface-visibility: hidden; width:100%; height:100%;"></iframe>`
+div.style.width = "1920px"
+div.style.height = "800px"
+div.innerHTML = `<iframe src="./form.html" frameborder="0" style="backface-visibility: hidden; width:100%; height:100%;"></iframe>`
+const blackDiv = document.createElement('div')
+blackDiv.style.width = "1920px"
+blackDiv.style.height = "800px"
+blackDiv.classList.add("bg-black")
 const css3DObject = new CSS3DObject(div)
-css3DObject.scale.set(0.00695, 0.00405, 1)
-css3DObject.position.set(-8, 26.3, -3.7)
-css3DObject.lookAt(-172, 26.3, 0)
+const css3DObject2 = new CSS3DObject(blackDiv)
+css3DObject.scale.set(0.00470, 0.00505, 1)
+css3DObject.position.set(-8, 26.25, -3.7)
+css3DObject.lookAt(-172, 16.3, 0)
 css3DObject.updateMatrixWorld()
-scene2.add(css3DObject)
+css3DObject2.scale.set(0.00470, 0.00505, 1)
+css3DObject2.position.set(-7.7, 26.25, -3.7)
+css3DObject2.lookAt(-172, 16.3, 0)
+css3DObject2.updateMatrixWorld()
+let backBtn;
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -44,13 +72,12 @@ renderer.shadowMap.enabled = true;
 // renderer.toneMappingExposure = 1.5
 // renderer.outputColorSpace = T.SRGBColorSpace
 renderer.domElement.classList.add("absolute")
+renderer2.domElement.classList.add("z-[4]")
 renderer2.domElement.classList.add("absolute")
 renderer2.domElement.style.pointerEvents = "none";
 renderer2.domElement.classList.add("top-0")
-renderer2.domElement.classList.add("z-[-1]")
 renderer2.domElement.classList.add("w-[1000px]")
 renderer2.domElement.classList.add("h-[500px]")
-
 
 camera.position.set(-35, 45, -60)
 
@@ -71,11 +98,11 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     },)
     document.getElementById("canvasHolder").appendChild(renderer.domElement);
+    document.getElementById('canvasHolder').appendChild(renderer2.domElement);
     click.play()
     whoosh.play()
     window.setTimeout(() => { ding.play() }, 1000)
 
-    document.getElementById('canvasHolder').appendChild(renderer2.domElement);
 
     // window.setInterval(() => {
     //   scene.traverseVisible(obj => {
@@ -103,7 +130,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-loader.load("dake03.gltf", function (gltf) {
+loader.load("dake03.gltf", function VR(gltf) {
   var mesh = gltf.scene;
   mesh.position.set(0, 1, 0);
   const planeGeo = new T.PlaneGeometry(250, 250)
@@ -295,7 +322,24 @@ loader.load("dake03.gltf", function (gltf) {
 
     // درخواست رندر مجدد صحنه (اگر نیاز است)
   }
+
+  imgTextureLoader = () => loader2.load("./images/form.png", function (texture) {
+    texture.flipY = true;
+    texture.wrapS = 1000
+    texture.wrapT = 1000
+    texture.repeat.set(13, 7)
+    texture.offset.set(0, 0.75)
+    mesh.children[0].children[0].getObjectByName("D03PIV").material.map = texture;
+  })
+
   mesh.children[0].children[0].getObjectByName("M_Dake6PIV").layers.toggle(BLOOM_SCENE)
+  mesh.children[0].children[0].getObjectByName("M_Dake16PIV").layers.toggle(BLOOM_SCENE)
+  mesh.children[0].children[0].getObjectByName("M_Dake15PIV").layers.toggle(BLOOM_SCENE)
+  mesh.children[0].children[0].getObjectByName("M_Dake12PIV").layers.toggle(BLOOM_SCENE)
+  mesh.children[0].children[0].getObjectByName("M_Dake984PIV").layers.toggle(BLOOM_SCENE)
+  mesh.children[0].children[0].getObjectByName("M_Dake991PIV").layers.toggle(BLOOM_SCENE)
+  mesh.children[0].children[0].getObjectByName("M_Dake1005PIV").layers.toggle(BLOOM_SCENE)
+  mesh.children[0].children[0].getObjectByName("M_Dake1031PIV").layers.toggle(BLOOM_SCENE)
   scene.add(mesh)
   loading()
 })
@@ -527,10 +571,8 @@ scene.add(camera)
 // scene.add(dl2)
 
 const raycaster = new T.Raycaster()
-// const raycaster2 = new T.Raycaster()
 
 window.addEventListener('pointerdown', onMouseDown)
-// window.addEventListener('click', onMouseDown2)
 
 function onMouseDown(event) {
   camera.updateProjectionMatrix()
@@ -543,10 +585,7 @@ function onMouseDown(event) {
 
   let intersections = raycaster.intersectObjects(scene.children, true);
   if (intersections.length > 0) {
-    console.log(intersections[0].object)
-    if (intersections[0].object.name != "M_Dake13") {
-      intersections[0].object.layers.toggle(BLOOM_SCENE)
-    }
+    console.log(intersections[0].object);
     if (intersections[0].object.name == "foodsPIV") {
       click.play()
       whoosh.play()
@@ -594,6 +633,59 @@ function onMouseDown(event) {
       })
       controls.enabled = true;
     }
+    if (intersections[0].object.name == "franchisingPIV") {
+      click.play()
+      whoosh.play()
+      textMesh.position.set(-8, 29, -8.6);
+
+      scene.add(textMesh);
+      gsap.to(camera.position, {
+        x: -12.3,
+        y: 26.3,
+        z: -3.7,
+        duration: 1.4,
+        ease: "none",
+        onUpdate: function () {
+          controls.target = new T.Vector3(0, 26.3, -3.7)
+          controls.update()
+        },
+      })
+      window.setTimeout(() => {
+        scene.children[scene.children.length - 2].children[0].children[0].getObjectByName("D03PIV").material.map = null;
+        scene.add(css3DObject)
+        scene.add(css3DObject2)
+      }, 300)
+      controls.enabled = false;
+    }
+    if (intersections[0].object.name == "back2") {
+      click.play()
+      whoosh.play()
+      scene.remove(textMesh);
+      gsap.to(camera.position, {
+        x: -18,
+        y: 5,
+        z: 45,
+        duration: 1.4,
+        ease: "none",
+        onUpdate: function () {
+          controls.target = new T.Vector3(0, 13, 0)
+          controls.update()
+        },
+      })
+      window.setTimeout(() => {
+        loader2.load("./images/form.png", function (texture) {
+          texture.flipY = true;
+          texture.wrapS = 1000
+          texture.wrapT = 1000
+          texture.repeat.set(13, 7)
+          texture.offset.set(0, 0.75)
+          scene.children[scene.children.length - 1].children[0].children[0].getObjectByName("D03PIV").material.map = texture;
+        })
+        scene.remove(css3DObject)
+        scene.remove(css3DObject2)
+      }, 300)
+      controls.enabled = true;
+    }
   }
   camera.updateProjectionMatrix()
   controls.update()
@@ -626,20 +718,20 @@ function restoreMaterial(obj) {
   }
 }
 
-function addRainDrops() {
+function addStars() {
   const geometry = new T.SphereGeometry(0.15, 0.15, 0.15);
   const mat = new T.MeshStandardMaterial({ color: 0xffffff })
-  const rainMesh = new T.Mesh(geometry, mat)
-  rainMesh.name = "rain";
+  const starsMesh = new T.Mesh(geometry, mat)
+  starsMesh.name = "rain";
 
   const [x, z] = Array(2).fill().map(() => T.MathUtils.randFloatSpread(400))
   const [y] = Array(1).fill().map(() => T.MathUtils.randFloatSpread(45))
 
-  rainMesh.position.set(x, 60 + y, z);
-  scene.add(rainMesh);
+  starsMesh.position.set(x, 60 + y, z);
+  scene.add(starsMesh);
 }
 
-Array(1200).fill().forEach(addRainDrops)
+Array(1200).fill().forEach(addStars)
 
 scene.traverseVisible(obj => {
   if (obj.name == "rain") {
@@ -648,13 +740,11 @@ scene.traverseVisible(obj => {
   }
 })
 
-
-
-// render the entire scene, then render bloom scene on top
-
-
 function animate() {
+  // console.log(scene.children)
+  requestAnimationFrame(animate);
   controls.update()
+  renderer2.render(scene, camera)
   // camera.layers.set(0);
   // baseComposer.render();
 
@@ -677,13 +767,12 @@ function animate() {
   // renderer.setRenderTarget(null);
 
   // composer.render()
+
   scene.traverse(darkenNonBloomed);
 
   bloomComposer.render();
   scene.traverse(restoreMaterial);
   finalComposer.render();
   // camera.updateProjectionMatrix()
-
-  requestAnimationFrame(animate);
 }
 animate()
