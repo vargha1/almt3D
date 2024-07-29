@@ -64,7 +64,14 @@ css3DObject2.scale.set(0.00470, 0.00505, 1)
 css3DObject2.position.set(-7.7, 26.25, -3.7)
 css3DObject2.lookAt(-172, 16.3, 0)
 css3DObject2.updateMatrixWorld()
-let backBtn;
+// if (detectDeviceType() == "Mobile") {
+//   div.style.width = "2060px"
+//   div.style.height = "800px"
+//   blackDiv.style.width = "2060px"
+//   blackDiv.style.height = "800px"
+//   css3DObject.position.set(-8, 26.25, -1)
+//   css3DObject.position.set(-7.7, 26.25, -1)
+// }
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -128,10 +135,12 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer2.setSize(window.innerWidth, window.innerHeight)
 });
 
 loader.load("dake03.gltf", function VR(gltf) {
   var mesh = gltf.scene;
+  console.log(mesh);
   mesh.position.set(0, 1, 0);
   const planeGeo = new T.PlaneGeometry(250, 250)
   const reflector = new Reflector(planeGeo, {
@@ -634,28 +643,54 @@ function onMouseDown(event) {
       controls.enabled = true;
     }
     if (intersections[0].object.name == "franchisingPIV") {
-      click.play()
-      whoosh.play()
-      textMesh.position.set(-8, 29, -8.6);
+      if (detectDeviceType() == "Desktop") {
+        click.play()
+        whoosh.play()
+        // css3DObject.scale(0.00470, 0.00505, 1)
+        // css3DObject2.scale(0.00470, 0.00505, 1)
+        textMesh.position.set(-8, 29, -8.6);
+        scene.add(textMesh);
+        gsap.to(camera.position, {
+          x: -15.3,
+          y: 26.3,
+          z: -3.7,
+          duration: 1.4,
+          ease: "none",
+          onUpdate: function () {
+            controls.target = new T.Vector3(0, 26.3, -3.7)
+            controls.update()
+          },
+        })
+        window.setTimeout(() => {
+          scene.children[scene.children.length - 2].children[0].children[0].getObjectByName("D03PIV").material.map = null;
+          scene.add(css3DObject)
+          scene.add(css3DObject2)
+        }, 300)
+        controls.enabled = false;
+      } else {
 
-      scene.add(textMesh);
-      gsap.to(camera.position, {
-        x: -12.3,
-        y: 26.3,
-        z: -3.7,
-        duration: 1.4,
-        ease: "none",
-        onUpdate: function () {
-          controls.target = new T.Vector3(0, 26.3, -3.7)
-          controls.update()
-        },
-      })
-      window.setTimeout(() => {
-        scene.children[scene.children.length - 2].children[0].children[0].getObjectByName("D03PIV").material.map = null;
-        scene.add(css3DObject)
-        scene.add(css3DObject2)
-      }, 300)
-      controls.enabled = false;
+        click.play()
+        whoosh.play()
+        textMesh.position.set(-8, 29, -8.6);
+        scene.add(textMesh);
+        gsap.to(camera.position, {
+          x: -21.3,
+          y: 26.3,
+          z: -3.7,
+          duration: 1.4,
+          ease: "none",
+          onUpdate: function () {
+            controls.target = new T.Vector3(0, 26.3, -3.7)
+            controls.update()
+          },
+        })
+        window.setTimeout(() => {
+          scene.children[scene.children.length - 2].children[0].children[0].getObjectByName("D03PIV").material.map = null;
+          scene.add(css3DObject)
+          scene.add(css3DObject2)
+        }, 300)
+        controls.enabled = true;
+      }
     }
     if (intersections[0].object.name == "back2") {
       click.play()
@@ -704,6 +739,13 @@ function loading() {
   document.getElementById("loadingScreen").classList.add("hidden")
 }
 
+function detectDeviceType() {
+  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    console.log("Mobile");
+    return "Mobile";
+  } else return "Desktop"
+}
+
 function darkenNonBloomed(obj) {
   if (obj.isMesh && bloomLayer.test(obj.layers) === false) {
     materials[obj.uuid] = obj.material;
@@ -740,9 +782,12 @@ scene.traverseVisible(obj => {
   }
 })
 
+
 function animate() {
   // console.log(scene.children)
   requestAnimationFrame(animate);
+  // const spin = scene.children[scene.children.length - 1].children[0].getObjectByName("SA_Obj29PIV")
+  // spin.rotateOnAxis(new T.Vector3(1,0,0) , 1)
   controls.update()
   renderer2.render(scene, camera)
   // camera.layers.set(0);
