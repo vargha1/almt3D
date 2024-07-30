@@ -49,7 +49,7 @@ renderer2.setSize(window.innerWidth, window.innerHeight)
 const div = document.createElement('div')
 div.style.width = "1920px"
 div.style.height = "800px"
-div.innerHTML = `<iframe src="./form.html" frameborder="0" style="backface-visibility: hidden; width:100%; height:100%;"></iframe>`
+div.innerHTML = `<iframe src="form.html" frameborder="0" style="backface-visibility: hidden; width:100%; height:100%;"></iframe>`
 const blackDiv = document.createElement('div')
 blackDiv.style.width = "1920px"
 blackDiv.style.height = "800px"
