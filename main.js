@@ -85,6 +85,7 @@ renderer2.domElement.style.pointerEvents = "none";
 renderer2.domElement.classList.add("top-0")
 renderer2.domElement.classList.add("w-[1000px]")
 renderer2.domElement.classList.add("h-[500px]")
+renderer2.setSize(window.innerWidth, window.innerHeight)
 
 camera.position.set(-35, 45, -60)
 
@@ -135,7 +136,8 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer2.setSize(window.innerWidth, window.innerHeight)
+  renderer2.setSize(window.innerWidth, window.innerHeight);
+  bloomComposer.setSize(window.innerWidth, window.innerHeight);
 });
 
 loader.load("dake03.gltf", function VR(gltf) {
@@ -401,44 +403,6 @@ finalComposer.addPass(renderScene);
 finalComposer.addPass(mixPass);
 finalComposer.addPass(outputPass);
 
-// var font = loader2.parse(HelvetikerFont)
-// const geo = new TextGeometry("My name is Vargha\nand i am a frontend web\ndeveloper", {
-//   font: font,
-//   size: 0.3,
-//   depth: 0.1,
-//   curveSegments: 12,
-// })
-
-// const textMesh = new T.Mesh(geo, new T.MeshPhongMaterial({ color: 0xffffff }))
-// textMesh.position.set(-1.3, 4.5, -7)
-// scene.add(textMesh)
-
-// var fired = false;
-// const clickHandler = (el, evt, fn) => el.addEventListener(evt, (e) => {
-//   if (!fired) fn(e);
-//   fired = true;
-// })
-
-// clickHandler(
-//   renderer.domElement,
-//   'click', () => {
-//     renderer.domElement.classList.add('transition-all')
-//     renderer.domElement.classList.add('duration-500')
-//     document.getElementById('startingText').classList.add('hidden')
-//     document.getElementById('header').classList.remove('hidden')
-//     document.querySelector("main").classList.add('bottom-0')
-//     document.querySelector("main").classList.remove('top-1/2')
-//     document.querySelector("main").classList.remove('-translate-y-1/2')
-//     renderer.setSize(window.innerWidth, window.innerHeight - 152)
-//     renderer.setPixelRatio(window.devicePixelRatio)
-//     document.getElementById('canvasHolder').classList.add('w-full')
-//     document.getElementById('canvasHolder').classList.remove('w-1/2')
-//     controls.autoRotate = false;
-//     controls.update()
-//     camera.position.set(-12, 8, 0)
-//   }
-// )
-
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.enablePan = false
 controls.minPolarAngle = 1.1;
@@ -447,37 +411,6 @@ controls.minDistance = 0;
 controls.maxDistance = 60;
 controls.rotateSpeed = 0.5;
 controls.update()
-
-// document.querySelectorAll('button').forEach((btn, key) => {
-//   btn.addEventListener('click', () => {
-//     if (key != 3) {
-//       gsap.to(camera.position, positions[key])
-//     } else {
-//       gsap.to(camera.position, {
-//         x: -12,
-//         y: 8,
-//         z: 0,
-//         duration: 2,
-//         ease: "none",
-//         onUpdate: function () {
-//           controls.target = new T.Vector3(0, 0, 0)
-//           controls.update()
-//         },
-//       })
-//       // fired = false;
-//       // document.querySelector("main").classList.remove('bottom-0')
-//       // document.querySelector("main").classList.add('top-1/2')
-//       // document.querySelector("main").classList.add('-translate-y-1/2')
-//       // renderer.setSize(400, 300)
-//       // renderer.setPixelRatio(window.devicePixelRatio)
-//       // document.getElementById('canvasHolder').classList.remove('w-full')
-//       // document.getElementById('canvasHolder').classList.add('w-1/2')
-//       // controls.reset()
-//       // controls.autoRotate = true;
-//       // controls.update()
-//     }
-//   })
-// })
 
 const geometry = new T.BoxGeometry(5, 5, 5);
 const material = new T.MeshStandardMaterial({ color: 0xffff00 });
