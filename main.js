@@ -211,6 +211,7 @@ loader.load("dake07.gltf", function VR(gltf) {
   // mesh.children[0].children[0].traverseVisible((obj) => {
   //   obj.layers.set(0)
   // })
+  const object1 = mesh.children[0].children[0].getObjectByName("M_Dake974PIV");
   const object2 = mesh.children[0].children[0].getObjectByName("D09PIV")
   const object3 = mesh.children[0].children[0].getObjectByName("D05PIV")
   const object4 = mesh.children[0].children[0].getObjectByName("D06PIV")
@@ -228,6 +229,28 @@ loader.load("dake07.gltf", function VR(gltf) {
   //   new T.MeshStandardMaterial({ color: 0xffffff }),
   // ]
   // console.log(object1);
+
+  const geo5 = object1.geometry;
+  const posAtr = geo5.attributes.position;
+  const positions = posAtr.array; // Directly access the array
+  const vertices = [];
+
+  for (let i = 0; i < posAtr.count; i++) {
+    vertices.push({
+      x: posAtr.getX(i),
+      y: posAtr.getY(i),
+      z: posAtr.getZ(i)
+    });
+  }
+
+  const pointGeometry = new T.BufferGeometry();
+  pointGeometry.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+  const pointMaterial = new T.PointsMaterial({ color: 0x00ffff, size: 0.05 });
+  const points = new T.Points(pointGeometry, pointMaterial);
+  points.position.set(3.2, 6, -11.7)
+  points.layers.toggle(BLOOM_SCENE)
+  points.name = "points"
+  scene.add(points);
 
   if (object2) {
     new TextureLoader().load("images/BSOD.png", (texture) => {
@@ -415,7 +438,7 @@ finalComposer.addPass(mixPass);
 finalComposer.addPass(outputPass);
 
 const controls = new OrbitControls(camera, renderer.domElement)
-controls.enablePan = true
+controls.enablePan = false
 controls.minPolarAngle = 1.1;
 controls.maxPolarAngle = 1.73;
 controls.minDistance = 0;
@@ -655,7 +678,54 @@ function onMouseDown(event) {
       document.getElementById("popframe").classList.remove("invisible")
       document.getElementById("popframe").classList.remove("opacity-0")
       document.getElementById("popframe").classList.remove("-mt-[100%]")
-      // scene.add(css2DObject)
+      controls.enabled = true;
+      isOpen = false;
+    }
+    if (intersections[0].object.name == "points") {
+      const geo5 = intersections[0].object.geometry;
+      const posAtr = geo5.attributes.position;
+      const positions = posAtr.array; // Directly access the array
+      const vertices = [];
+
+      for (let i = 0; i < posAtr.count; i++) {
+        vertices.push({
+          x: posAtr.getX(i),
+          y: posAtr.getY(i),
+          z: posAtr.getZ(i)
+        });
+      }
+      vertices.forEach((vertex, i) => {
+        const originalY = vertex.y;
+        const originalZ = vertex.z
+
+        gsap.to(vertex, {
+          duration: 1.4,
+          y: 15.5, // animate to a new random y position
+          z: Math.random() * 2 + 11,
+          yoyo: true, // animate back to the original position
+          onUpdate: () => {
+            // Update the positions in the geometry
+            positions[i * 3 + 2] = vertex.z;
+            positions[i * 3 + 1] = vertex.y;
+            geo5.attributes.position.needsUpdate = true;
+          }
+        });
+        gsap.to(vertex, {
+          duration: 1.4,
+          y: originalY, // animate to a new random y position
+          z: originalZ,
+          yoyo: true, // animate back to the original position
+          delay: 1.4,
+          onUpdate: () => {
+            // Update the y position in the geometry
+            positions[i * 3 + 2] = vertex.z;
+            positions[i * 3 + 1] = vertex.y;
+            geo5.attributes.position.needsUpdate = true;
+          }
+        });
+      });
+
+
       controls.enabled = true;
       isOpen = false;
     }
